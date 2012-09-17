@@ -32,7 +32,8 @@ int main(void)
 	{ 42.0, 0.0, 90.0, 100.0 },
 	{ 36.0, 1.0, 0.0,  26.0  },
       };
-    State state = { 2, bugs_bunny };
+    Bullet* bullets = NULL;
+    State state = { 2, 0, bugs_bunny, bullets };
   
     State_Send(in, &state);
     Commands* c = Commands_Get(in);

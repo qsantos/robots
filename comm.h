@@ -23,20 +23,6 @@
 
 #include "utils.h"
 
-typedef struct __attribute__((packed))
-{
-  double x;
-  double y;
-  double angle;
-  double energy;
-} Robot;
-
-typedef struct __attribute__((packed))
-{
-  u32    n_robots;
-  Robot* robot;
-} State;
-
 typedef enum
 {
     FORWARD,
@@ -47,13 +33,13 @@ typedef enum
     FIRE,
 } Command_Type;
 
-typedef struct __attribute__((packed))
+typedef struct PACKED
 {
   Command_Type type;
   double       amount;
 } Command;
 
-typedef struct __attribute__((packed))
+typedef struct PACKED
 {
   u32      length;
   Command* command;
@@ -62,6 +48,30 @@ typedef struct __attribute__((packed))
 void      Commands_Send(FILE*, u32, ...);
 Commands* Commands_Get (FILE*);
 void      Commands_Free(Commands*);
+
+typedef struct PACKED
+{
+  double x;
+  double y;
+  double angle;
+  double energy;
+} Robot;
+
+typedef struct PACKED
+{
+  double x;
+  double y;
+  double vx;
+  double vy;
+} Bullet;
+
+typedef struct PACKED
+{
+  u32     n_robots;
+  u32     n_bullets;
+  Robot*  robot;
+  Bullet* bullet;
+} State;
 
 void   State_Send  (FILE*, State*);
 State* State_Get   (FILE*);

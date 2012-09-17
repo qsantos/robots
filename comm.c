@@ -25,17 +25,102 @@
 void State_Send(FILE* f, State* s)
 {
   assert(s);
-  fwrite(&s->n_robots, sizeof(u32),   1,           f);
-  fwrite(s->robot,     sizeof(Robot), s->n_robots, f);
+  fwrite(s,         sizeof(u32),    2,           f);
+  fwrite(s->robot,  sizeof(Robot),  s->n_robots, f);
+  fwrite(s->bullet, sizeof(Bullet), s->n_bullets, f);
 }
 
 State* State_Get(FILE* f)
 {
   State* s = ALLOC(State, 1);
-  fread(&s->n_robots, sizeof(u32), 1, f);
+  fread(s, sizeof(u32), 2, f);
   s->robot = ALLOC(Robot, s->n_robots);
   fread(s->robot, sizeof(Robot), s->n_robots, f);
+  s->bullet = ALLOC(Bullet, s->n_bullets);
+  fread(s->bullet, sizeof(Bullet), s->n_bullets, f);
   return s;
+}
+
+void State_Update(State* s, u32 id, Commands* c)
+{
+  assert(id < s->n_robots);
+
+  for (u32 i = 0; i < c->length; i++)
+  {
+    switch (c->command[i].type)
+    {
+    case FORWARD:
+      s->robot[id].x += c->command[i].amount * cos(s->robot[id].angle);
+      s->robot[id].y += c->command[i].amount * sin(s->robot[id].angle);
+      break;
+
+    case BACKWARD:
+      s->robot[id].x -= c->command[i].amount * cos(s->robot[id].angle);
+      s->robot[id].y -= c->command[i].amount * sin(s->robot[id].angle);
+      break;
+
+    case LEFT:
+      s->robot[id].x -= c->command[i].amount * sin(s->robot[id].angle);
+      s->robot[id].y += c->command[i].amount * cos(s->robot[id].angle);
+      break;
+
+    case RIGHT:
+      s->robot[id].x += c->command[i].amount * sin(s->robot[id].angle);
+      s->robot[id].y -= c->command[i].amount * cos(s->robot[id].angle);
+      break;
+
+    case ROTATE:
+      s->robot[id].angle += Angle_ToRad(c->command[i].amount);
+
+    case FIRE:
+      s->n_bullets++;
+      s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets);
+
+      s->bullet[s->n_bullets - 1].x  = s->robot[id].x;
+      s->bullet[s->n_bullets - 1].y  = s->robot[id].y;
+
+      s->bullet[s->n_bullets - 1].vx = c->command[i].amount * cos(s->robot[id].angle);
+      s->bullet[s->n_bullets - 1].vy = c->command[i].amount * sin(s->robot[id].angle);
+
+      break;
+    }
+  }
+}
+
+void State_Debug(State* s)
+{
+  assert(s);
+  printf("State information\n-----------------\n\n");
+  printf("# robots : %lu\n\n", s->n_robots);
+  printf("# bullets : %lu\n\n", s->n_bullets);
+
+  for (u32 i = 0; i < s->n_robots; i++)
+  {
+    printf(" > Robot #%lu\n", i);
+    printf("    x      %f\n", s->robot[i].x);
+    printf("    y      %f\n", s->robot[i].y);
+    printf("    angle  %f\n", s->robot[i].angle);
+    printf("    energy %f\n", s->robot[i].energy);
+    putchar('\n');
+  }
+
+  for (u32 i = 0; i < s->n_bullets; i++)
+  {
+    printf(" > Bullet #%lu\n", i);
+    printf("    x  %f\n", s->bullet[i].x);
+    printf("    y  %f\n", s->bullet[i].y);
+    printf("    vx %f\n", s->bullet[i].vx);
+    printf("    vy %f\n", s->bullet[i].vy);
+    putchar('\n');
+  }
+}
+
+void State_Free(State* s)
+{
+  assert(s);
+  free(s->robot);
+  free(s->bullet);
+  free(s);
 }
 
 void Commands_Send(FILE* f, u32 len, ...)
@@ -73,65 +158,4 @@ void Commands_Free(Commands* c)
   assert(c);
   free(c->command);
   free(c);
-}
-
-void State_Update(State* s, u32 id, Commands* c)
-{
-  assert(id < s->n_robots);
-
-  for (u32 i = 0; i < c->length; i++)
-  {
-    switch (c->command[i].type)
-    {
-    case FORWARD:
-      s->robot[id].x += c->command[i].amount * cos(s->robot[id].angle);
-      s->robot[id].y += c->command[i].amount * sin(s->robot[id].angle);
-      break;
-
-    case BACKWARD:
-      s->robot[id].x -= c->command[i].amount * cos(s->robot[id].angle);
-      s->robot[id].y -= c->command[i].amount * sin(s->robot[id].angle);
-      break;
-
-    case LEFT:
-      s->robot[id].x -= c->command[i].amount * sin(s->robot[id].angle);
-      s->robot[id].y += c->command[i].amount * cos(s->robot[id].angle);
-      break;
-
-    case RIGHT:
-      s->robot[id].x += c->command[i].amount * sin(s->robot[id].angle);
-      s->robot[id].y -= c->command[i].amount * cos(s->robot[id].angle);
-      break;
-
-    case ROTATE:
-      s->robot[id].angle += Angle_ToRad(c->command[i].amount);
-
-    case FIRE:
-      break;
-    }
-  }
-}
-
-void State_Debug(State* s)
-{
-  assert(s);
-  printf("State information\n-----------------\n\n");
-  printf("# robots : %lu\n\n", s->n_robots);
-
-  for (u32 i = 0; i < s->n_robots; i++)
-  {
-    printf(" > Robot #%lu\n", i);
-    printf("    x      %f\n", s->robot[i].x);
-    printf("    y      %f\n", s->robot[i].y);
-    printf("    angle  %f\n", s->robot[i].angle);
-    printf("    energy %f\n", s->robot[i].energy);
-    putchar('\n');
-  }
-}
-
-void State_Free(State* s)
-{
-  assert(s);
-  free(s->robot);
-  free(s);
 }
