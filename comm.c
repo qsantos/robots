@@ -104,7 +104,7 @@ void State_Update(State* s, u32 id, Commands* c)
       break;
 
     case ROTATE:
-      s->robot[id].angle += c->command[i].amount;
+      s->robot[id].angle += Angle_ToRad(c->command[i].amount);
 
     case FIRE:
       break;
