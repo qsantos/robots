@@ -27,22 +27,20 @@ int main(void)
   {
     FILE* in = TCP_Accept(socket);
 
-    /* DEBUG */
-/*    char c = fgetc(in);
-    while (!feof(in))
-    {
-      putchar(c);
-      c = fgetc(in);
-      }*/
-    State* s = File_GetState(in);
-    printf("%lu\n", s->n_robots);
-    for (u32 i = 0; i < s->n_robots; i++)
-    {
-      printf("x:      %f\n", s->robot[i].x);
-      printf("y:      %f\n", s->robot[i].y);
-      printf("angle:  %f\n", s->robot[i].angle);
-      printf("energy: %f\n", s->robot[i].energy);
-    }
+    Robot bugs_bunny[] =
+      {
+	{ 42.0, 0.0, 1.0, 100.0 },
+	{ 36.0, 1.0, 0.0, 26.0  },
+      };
+    State state = { 2, bugs_bunny };
+  
+    State_Send(in, &state);
+    Commands* c = Commands_Get(in);
+
+    State_Update(&state, 1, c);
+    State_Send(in, &state);
+
+    Commands_Free(c);
 
     fclose(in);
   }
