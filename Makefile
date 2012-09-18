@@ -5,7 +5,7 @@ OFILES_SERVER := $(OFILES) server.o
 CFLAGS  := -Wall -O3 -Wextra -pedantic -ansi -std=c99
 LDFLAGS := -lm
 
-.PHONY: all clean destroy
+.PHONY: all clean destroy rebuild
 
 all: client server
 
@@ -26,3 +26,5 @@ clean:
 
 destroy:
 	-rm -f $(OFILES_SERVER) $(OFILES_CLIENT) client server
+
+rebuild: clean all
