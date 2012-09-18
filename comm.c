@@ -4,7 +4,7 @@
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
+ *   the Delete Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *
  *   This program is distributed in the hope that it will be useful,
@@ -21,6 +21,30 @@
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
+
+State* State_New(u32 n_clients)
+{
+  State* ret = ALLOC(State, 1);
+  
+  ret->fh        = ALLOC(int,   n_clients);
+  ret->fd        = ALLOC(FILE*, n_clients);
+  ret->n_robots  = n_clients;
+  ret->robot     = ALLOC(Robot, n_clients);
+  ret->n_bullets = 0;
+  ret->bullet    = NULL;
+  
+  return ret;
+}
+
+void State_Delete(State* s)
+{
+  assert(s);
+  free(s->bullet);
+  free(s->robot);
+  free(s->fh);
+  free(s->fd);
+  free(s);
+}
 
 void State_Send(FILE* f, State* s)
 {
@@ -106,14 +130,6 @@ void State_Debug(State* s)
   }
 }
 
-void State_Free(State* s)
-{
-  assert(s);
-  free(s->robot);
-  free(s->bullet);
-  free(s);
-}
-
 void Commands_Send(FILE* f, u32 len, ...)
 {
   Commands* c = ALLOC(Commands, 1);
@@ -144,7 +160,7 @@ Commands* Commands_Get(FILE* f)
   return c;
 }
 
-void Commands_Free(Commands* c)
+void Commands_Delete(Commands* c)
 {
   assert(c);
   free(c->command);

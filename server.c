@@ -72,49 +72,46 @@ int main(int argc, char** argv)
     return 1;
   }
   
-  int*   fd = ALLOC(int,   n_clients);
-  FILE** fh = ALLOC(FILE*, n_clients);
+  State* state = State_New(n_clients);
   for (u32 i = 0; i < n_clients; i++)
   {
-    fh[i] = TCP_Accept(server);
-    fd[i] = fileno(fh[i]);
+    state->fh[i] = TCP_Accept(server);
+    state->fd[i] = fileno(state->fh[i]);
   }
-  int fd_max = fd[n_clients - 1] + 1;
-
-  Robot bugs_bunny[] =
+  int fd_max = state->fd[n_clients - 1] + 1;
+  
   {
-    { 42.0, 0.0, 90.0, 100.0 },
-    { 36.0, 1.0, 0.0,  26.0  },
-  };
-  Bullet* bullets = NULL;
-  State state = { 2, 0, bugs_bunny, bullets };
+    Robot tmp = { 42.0, 0.0, 90.0, 100.0 };
+    state->robot[0] = tmp;
+  }
+  {
+    Robot tmp = { 36.0, 1.0, 0.0,  26.0  };
+    state->robot[1] = tmp;
+  }
   
   fd_set fds;
   while (42)
   {
     FD_ZERO(&fds);
     for (u32 i = 0; i < n_clients; i++)
-      FD_SET(fd[i], &fds);
+      FD_SET(state->fd[i], &fds);
 
     select(fd_max, &fds, NULL, NULL, NULL);
 
     for (u32 i = 0; i < n_clients; i++)
-      if (FD_ISSET(fd[i], &fds))
+      if (FD_ISSET(state->fd[i], &fds))
       {
-	Commands* c = Commands_Get(fh[i]);
-	State_Update(&state, i, c);
-	Commands_Free(c);
+	Commands* c = Commands_Get(state->fh[i]);
+	State_Update(state, i, c);
+	Commands_Delete(c);
       }
 
-    State_Debug(&state);
+    State_Debug(state);
   }
 
   for (u32 i = 0; i < n_clients; i++)
-    fclose(fh[i]);
-  free(fh);
-  free(fd);
-
+    fclose(state->fh[i]);
   TCP_Close(server);
-
+  State_Delete(state);
   return 0;
 }

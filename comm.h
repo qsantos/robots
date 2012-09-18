@@ -4,7 +4,7 @@
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
+ *   the Delete Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *
  *   This program is distributed in the hope that it will be useful,
@@ -43,9 +43,9 @@ typedef struct PACKED
   Command* command;
 } Commands;
 
-void      Commands_Send(FILE*, u32, ...);
-Commands* Commands_Get (FILE*);
-void      Commands_Free(Commands*);
+void      Commands_Delete(Commands*);
+void      Commands_Send  (FILE*, u32, ...);
+Commands* Commands_Get   (FILE*);
 
 typedef struct PACKED
 {
@@ -65,16 +65,21 @@ typedef struct PACKED
 
 typedef struct PACKED
 {
+  int*   fd;
+  FILE** fh;
+  
   u32     n_robots;
-  u32     n_bullets;
   Robot*  robot;
+  
+  u32     n_bullets;
   Bullet* bullet;
 } State;
 
+State* State_New   (u32);
+void   State_Delete(State*);
 void   State_Send  (FILE*, State*);
 State* State_Get   (FILE*);
 void   State_Update(State*, u32, Commands*);
 void   State_Debug (State*);
-void   State_Free  (State*);
 
 #endif
