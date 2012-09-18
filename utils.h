@@ -24,10 +24,6 @@
 
 /* TYPES */
 
-static const char false = 0;
-static const char true  = 1;
-typedef char bool;
-
 typedef unsigned char  u8;
 typedef unsigned short u16;
 typedef unsigned long  u32;
@@ -37,6 +33,10 @@ typedef signed short   s16;
 typedef signed long    s32;
 
 typedef char*          string;
+
+static const u8 false = 0;
+static const u8 true  = 1;
+typedef u8 bool;
 
 /* MEMORY MANAGEMENT */
 
