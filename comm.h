@@ -26,7 +26,6 @@
 typedef enum
 {
   FORWARD,
-  BACKWARD,
   ROTATE,
   FIRE,
 } Command_Type;
@@ -37,15 +36,8 @@ typedef struct PACKED
   double       amount;
 } Command;
 
-typedef struct PACKED
-{
-  u32      length;
-  Command* command;
-} Commands;
-
-void      Commands_Delete(Commands*);
-void      Commands_Send  (FILE*, u32, ...);
-Commands* Commands_Get   (FILE*);
+void    Command_Send(FILE*, Command);
+Command Command_Get (FILE*);
 
 typedef struct PACKED
 {
@@ -79,7 +71,7 @@ State* State_New   (u32);
 void   State_Delete(State*);
 void   State_Send  (FILE*, State*);
 State* State_Get   (FILE*);
-void   State_Update(State*, u32, Commands*);
+void   State_Update(State*, u32, Command);
 void   State_Debug (State*);
 
 #endif

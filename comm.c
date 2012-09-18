@@ -65,40 +65,32 @@ State* State_Get(FILE* f)
   return s;
 }
 
-void State_Update(State* s, u32 id, Commands* c)
+void State_Update(State* s, u32 id, Command c)
 {
   assert(id < s->n_robots);
 
-  for (u32 i = 0; i < c->length; i++)
+  switch (c.type)
   {
-    switch (c->command[i].type)
-    {
-    case FORWARD:
-      s->robot[id].x += c->command[i].amount * cos(s->robot[id].angle);
-      s->robot[id].y += c->command[i].amount * sin(s->robot[id].angle);
-      break;
+  case FORWARD:
+    s->robot[id].x += c.amount * cos(s->robot[id].angle);
+    s->robot[id].y += c.amount * sin(s->robot[id].angle);
+    break;
 
-    case BACKWARD:
-      s->robot[id].x -= c->command[i].amount * cos(s->robot[id].angle);
-      s->robot[id].y -= c->command[i].amount * sin(s->robot[id].angle);
-      break;
+  case ROTATE:
+    s->robot[id].angle += Angle_ToRad(c.amount);
+    break;
 
-    case ROTATE:
-      s->robot[id].angle += Angle_ToRad(c->command[i].amount);
-      break;
+  case FIRE:
+    s->n_bullets++;
+    s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets);
 
-    case FIRE:
-      s->n_bullets++;
-      s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets);
+    s->bullet[s->n_bullets - 1].x  = s->robot[id].x;
+    s->bullet[s->n_bullets - 1].y  = s->robot[id].y;
 
-      s->bullet[s->n_bullets - 1].x  = s->robot[id].x;
-      s->bullet[s->n_bullets - 1].y  = s->robot[id].y;
+    s->bullet[s->n_bullets - 1].vx = c.amount * cos(s->robot[id].angle);
+    s->bullet[s->n_bullets - 1].vy = c.amount * sin(s->robot[id].angle);
 
-      s->bullet[s->n_bullets - 1].vx = c->command[i].amount * cos(s->robot[id].angle);
-      s->bullet[s->n_bullets - 1].vy = c->command[i].amount * sin(s->robot[id].angle);
-
-      break;
-    }
+    break;
   }
 }
 
@@ -130,39 +122,14 @@ void State_Debug(State* s)
   }
 }
 
-void Commands_Send(FILE* f, u32 len, ...)
+void Command_Send(FILE* f, Command c)
 {
-  Commands* c = ALLOC(Commands, 1);
-  c->length  = len;
-  c->command = ALLOC(Command, len);
-
-  va_list vl;
-  va_start(vl, len);
-  for (u32 i = 0; i < len; i++)
-  {
-    c->command[i].type   = va_arg(vl, Command_Type);
-    c->command[i].amount = va_arg(vl, double);
-  }
-  va_end(vl);
-
-  fwrite(&len,       sizeof(u32),     1,   f);
-  fwrite(c->command, sizeof(Command), len, f);
-
-  free(c);
+  fwrite(&c, sizeof(Command), 1, f);
 }
 
-Commands* Commands_Get(FILE* f)
+Command Command_Get(FILE* f)
 {
-  Commands* c = ALLOC(Commands, 1);
-  fread(&c->length, sizeof(u32), 1, f);
-  c->command = ALLOC(Command, c->length);
-  fread(c->command, sizeof(Command), c->length, f);
+  Command c;
+  fread(&c, sizeof(Command), 1, f);
   return c;
-}
-
-void Commands_Delete(Commands* c)
-{
-  assert(c);
-  free(c->command);
-  free(c);
 }
