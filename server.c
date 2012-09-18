@@ -20,22 +20,58 @@
 #define _XOPEN_SOURCE
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/select.h>
+#include <ctype.h>
 
 #include "socket.h"
 #include "comm.h"
 
-int main(void)
+int main(int argc, char** argv)
 {
-  s32 server = TCP_ListenTo("127.0.0.1", 4242);
+  char* interface = "127.0.0.1";
+  u32   port      = 4242;
+  u32   n_clients = 2;
+
+  opterr = 0;
+  int c;
+  while ((c = getopt(argc, argv, "i:n:p:")) != -1)
+    switch (c)
+    {
+    case 'i':
+      interface = optarg;
+      break;
+
+    case 'n':
+      n_clients = (u32) atoi(optarg);
+      break;
+
+    case 'p':
+      port = (u32) atoi(optarg);
+      break;
+
+    case '?':
+      if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
+	fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+      else if (isprint(optopt))
+	fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+      else
+	fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+      return 1;
+
+    default:
+      abort();
+    }
+
+  printf("Listening on %s:%lu\n", interface, port);
+  printf("Waiting for %lu clients\n", n_clients);
+  s32 server = TCP_ListenTo(interface, port);
   if (server < 0)
   {
     fprintf(stderr, "The server could not bind the adequate port\n");
     return 1;
   }
   
-  u32 n_clients = 2;
-
   int*   fd = ALLOC(int,   n_clients);
   FILE** fh = ALLOC(FILE*, n_clients);
   for (u32 i = 0; i < n_clients; i++)
