@@ -28,7 +28,8 @@ int main(void)
     return 1;
   }
 
-  Commands_Send(toto, 3, FORWARD, 1.0, ROTATE, 1.0, FIRE, 1.0);
+  Command c = { FORWARD, 1.0 };
+  Command_Send(toto, c);
 
   fclose(toto);
 
