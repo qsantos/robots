@@ -53,13 +53,14 @@ static inline void* my_assert(void* ptr)
 
 #define PACKED __attribute__((packed))
 
+#define PI (3.14159265358979323846)
 static inline double Angle_ToRad(double t)
 {
   while (t < -180.0)
     t += 360.0;
   while (t >= 180.0)
     t -= 360.0;
-  return t * 3.14159265358979323846 / 180.0;
+  return t * PI / 180.0;
 }
 
 #endif

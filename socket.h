@@ -27,8 +27,8 @@
 #include "utils.h"
 
 FILE* TCP_Connect (const string, u16);
-u32   TCP_ListenTo(const string, u16);
-u32   TCP_Listen  (u16);
+s32   TCP_ListenTo(const string, u16);
+s32   TCP_Listen  (u16);
 FILE* TCP_Accept  (u32);
 void  TCP_Close   (u32);
 

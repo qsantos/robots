@@ -22,11 +22,16 @@
 int main(void)
 {
   FILE* toto = TCP_Connect("127.0.0.1", 4242);
+  if (!toto)
+  {
+    fprintf(stderr, "Could not connect to the server\n");
+    return 1;
+  }
 
   State* s = State_Get(toto);
   State_Debug(s);
 
-  Commands_Send(toto, 3, FORWARD, 1.0, LEFT, 1.0, FIRE, 1.0);
+  Commands_Send(toto, 3, FORWARD, 1.0, ROTATE, 1.0, FIRE, 1.0);
 
   State_Free(s);
   s = State_Get(toto);

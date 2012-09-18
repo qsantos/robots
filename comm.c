@@ -59,18 +59,9 @@ void State_Update(State* s, u32 id, Commands* c)
       s->robot[id].y -= c->command[i].amount * sin(s->robot[id].angle);
       break;
 
-    case LEFT:
-      s->robot[id].x -= c->command[i].amount * sin(s->robot[id].angle);
-      s->robot[id].y += c->command[i].amount * cos(s->robot[id].angle);
-      break;
-
-    case RIGHT:
-      s->robot[id].x += c->command[i].amount * sin(s->robot[id].angle);
-      s->robot[id].y -= c->command[i].amount * cos(s->robot[id].angle);
-      break;
-
     case ROTATE:
       s->robot[id].angle += Angle_ToRad(c->command[i].amount);
+      break;
 
     case FIRE:
       s->n_bullets++;

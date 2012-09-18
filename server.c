@@ -21,11 +21,18 @@
 
 int main(void)
 {
-  u32 socket = TCP_ListenTo("127.0.0.1", 4242);
+  s32 socket = TCP_ListenTo("127.0.0.1", 4242);
+  if (socket < 0)
+  {
+    fprintf(stderr, "The server could not bind the adequate port\n");
+    return 1;
+  }
   
   while (42)
   {
     FILE* in = TCP_Accept(socket);
+    if (!in)
+      fprintf(stderr, "One connection failed\n");
 
     Robot bugs_bunny[] =
       {

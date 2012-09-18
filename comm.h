@@ -25,12 +25,10 @@
 
 typedef enum
 {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT,
-    ROTATE,
-    FIRE,
+  FORWARD,
+  BACKWARD,
+  ROTATE,
+  FIRE,
 } Command_Type;
 
 typedef struct PACKED
