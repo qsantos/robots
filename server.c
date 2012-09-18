@@ -101,9 +101,8 @@ int main(int argc, char** argv)
     for (u32 i = 0; i < n_clients; i++)
       if (FD_ISSET(state->fd[i], &fds))
       {
-	Commands* c = Commands_Get(state->fh[i]);
+	Command c = Command_Get(state->fh[i]);
 	State_Update(state, i, c);
-	Commands_Delete(c);
       }
 
     State_Debug(state);
