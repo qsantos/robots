@@ -28,14 +28,7 @@ int main(void)
     return 1;
   }
 
-  State* s = State_Get(toto);
-  State_Debug(s);
-
   Commands_Send(toto, 3, FORWARD, 1.0, ROTATE, 1.0, FIRE, 1.0);
-
-  State_Free(s);
-  s = State_Get(toto);
-  State_Debug(s);
 
   fclose(toto);
 

@@ -16,44 +16,69 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
+#include <stdio.h>
+#include <sys/select.h>
+
 #include "socket.h"
 #include "comm.h"
 
 int main(void)
 {
-  s32 socket = TCP_ListenTo("127.0.0.1", 4242);
-  if (socket < 0)
+  s32 server = TCP_ListenTo("127.0.0.1", 4242);
+  if (server < 0)
   {
     fprintf(stderr, "The server could not bind the adequate port\n");
     return 1;
   }
   
+  u32 n_clients = 2;
+
+  int*   fd = ALLOC(int,   n_clients);
+  FILE** fh = ALLOC(FILE*, n_clients);
+  for (u32 i = 0; i < n_clients; i++)
+  {
+    fh[i] = TCP_Accept(server);
+    fd[i] = fileno(fh[i]);
+  }
+  int fd_max = fd[n_clients - 1] + 1;
+
+  Robot bugs_bunny[] =
+  {
+    { 42.0, 0.0, 90.0, 100.0 },
+    { 36.0, 1.0, 0.0,  26.0  },
+  };
+  Bullet* bullets = NULL;
+  State state = { 2, 0, bugs_bunny, bullets };
+  
+  fd_set fds;
   while (42)
   {
-    FILE* in = TCP_Accept(socket);
-    if (!in)
-      fprintf(stderr, "One connection failed\n");
+    FD_ZERO(&fds);
+    for (u32 i = 0; i < n_clients; i++)
+      FD_SET(fd[i], &fds);
 
-    Robot bugs_bunny[] =
+    select(fd_max, &fds, NULL, NULL, NULL);
+
+    for (u32 i = 0; i < n_clients; i++)
+      if (FD_ISSET(fd[i], &fds))
       {
-	{ 42.0, 0.0, 90.0, 100.0 },
-	{ 36.0, 1.0, 0.0,  26.0  },
-      };
-    Bullet* bullets = NULL;
-    State state = { 2, 0, bugs_bunny, bullets };
-  
-    State_Send(in, &state);
-    Commands* c = Commands_Get(in);
+	Commands* c = Commands_Get(fh[i]);
+	State_Update(&state, i, c);
+	Commands_Free(c);
+      }
 
-    State_Update(&state, 1, c);
-    State_Send(in, &state);
-
-    Commands_Free(c);
-
-    fclose(in);
+    State_Debug(&state);
   }
 
-  TCP_Close(socket);
+  for (u32 i = 0; i < n_clients; i++)
+    fclose(fh[i]);
+  free(fh);
+  free(fd);
+
+  TCP_Close(server);
 
   return 0;
 }
