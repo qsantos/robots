@@ -1,5 +1,5 @@
 /*\
- *  This is an awesome programm simulating awesome batlles of awesome robot tanks
+ *  This is an awesome programm simulating awesome battles of awesome robot tanks
  *  Copyright (C) 2012  Thomas GREGOIRE, Quentin SANTOS
  *
  *  This program is free software: you can redistribute it and/or modify
