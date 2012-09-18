@@ -59,20 +59,21 @@ typedef struct PACKED
 {
   double x;
   double y;
-  double vx;
-  double vy;
+  double angle;
+  double energy;
 } Bullet;
 
 typedef struct PACKED
 {
+  u32     n_robots;
+  u32     n_bullets;
+  
+  Robot*  robot;
+  Bullet* bullet;
+  
   int*   fd;
   FILE** fh;
   
-  u32     n_robots;
-  Robot*  robot;
-  
-  u32     n_bullets;
-  Bullet* bullet;
 } State;
 
 State* State_New   (u32);

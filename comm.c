@@ -93,9 +93,8 @@ void State_Update(State* s, u32 id, Commands* c)
 
       s->bullet[s->n_bullets - 1].x  = s->robot[id].x;
       s->bullet[s->n_bullets - 1].y  = s->robot[id].y;
-
-      s->bullet[s->n_bullets - 1].vx = c->command[i].amount * cos(s->robot[id].angle);
-      s->bullet[s->n_bullets - 1].vy = c->command[i].amount * sin(s->robot[id].angle);
+      s->bullet[s->n_bullets - 1].angle = Angle_ToRad(c->command[i].amount);
+      s->bullet[s->n_bullets - 1].energy = c->command[i].amount;
 
       break;
     }
@@ -122,10 +121,10 @@ void State_Debug(State* s)
   for (u32 i = 0; i < s->n_bullets; i++)
   {
     printf(" > Bullet #%lu\n", i);
-    printf("    x  %f\n", s->bullet[i].x);
-    printf("    y  %f\n", s->bullet[i].y);
-    printf("    vx %f\n", s->bullet[i].vx);
-    printf("    vy %f\n", s->bullet[i].vy);
+    printf("    x      %f\n", s->bullet[i].x);
+    printf("    y      %f\n", s->bullet[i].y);
+    printf("    angle  %f\n", s->bullet[i].angle);
+    printf("    energy %f\n", s->bullet[i].energy);
     putchar('\n');
   }
 }
