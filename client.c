@@ -16,22 +16,58 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 #include "socket.h"
 #include "comm.h"
 
-int main(void)
+int main(int argc, char** argv)
 {
-  FILE* toto = TCP_Connect("127.0.0.1", 4242);
-  if (!toto)
+  char* interface = "127.0.0.1";
+  u32   port      = 4242;
+
+  opterr = 0;
+  int c;
+  while ((c = getopt(argc, argv, "i:p:")) != -1)
+    switch (c)
+    {
+    case 'i':
+      interface = optarg;
+      break;
+
+    case 'p':
+      port = (u32) atoi(optarg);
+      break;
+
+    case '?':
+      if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
+	fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+      else if (isprint(optopt))
+	fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+      else
+	fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+      return 1;
+
+    default:
+      abort();
+    }
+
+  FILE* server = TCP_Connect(interface, port);
+  if (!server)
   {
     fprintf(stderr, "Could not connect to the server\n");
     return 1;
   }
 
-  Command c = { FORWARD, 1.0 };
-  Command_Send(toto, c);
+  Command cmd = { FORWARD, 1.0 };
+  Command_Send(server, cmd);
 
-  fclose(toto);
+  fclose(server);
 
   return 0;
 }
