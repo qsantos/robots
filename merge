@@ -1,0 +1,7 @@
+#!/bin/bash
+git commit -a
+git checkout master
+git merge quentin
+git pull origin master
+git push origin master
+git checkout quentin

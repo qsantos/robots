@@ -15,21 +15,3 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
-
-#ifndef SOCKET_H
-#define SOCKET_H
-
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
-#endif
-#include <stdio.h>
-
-#include "utils.h"
-
-FILE* TCP_Connect (const string, u16);
-s32   TCP_ListenTo(const string, u16);
-s32   TCP_Listen  (u16);
-FILE* TCP_Accept  (u32);
-void  TCP_Close   (u32);
-
-#endif

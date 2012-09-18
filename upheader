@@ -1,0 +1,14 @@
+#!/bin/sh
+#IFS=$'\n'
+for i in $(ls *.h *.c | grep -v -e lexer.h -e lex.yy.c -e parser.h -e parser.tab.c)
+do
+	line=$(grep -Enm1 '^\\\*/' $i | awk -F: '{print $1;}')
+	cat header > tmp
+	if [ -z $line ]
+	then
+		cat $i >> tmp
+	else
+		tail $i -n+$(($line + 1)) >> tmp
+	fi
+	mv tmp $i
+done
