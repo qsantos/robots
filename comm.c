@@ -26,8 +26,8 @@ State* State_New(u32 n_clients)
 {
   State* ret = ALLOC(State, 1);
   
-  ret->fh        = ALLOC(int,   n_clients);
-  ret->fd        = ALLOC(FILE*, n_clients);
+  ret->fd        = ALLOC(int,   n_clients);
+  ret->fh        = ALLOC(FILE*, n_clients);
   ret->n_robots  = n_clients;
   ret->robot     = ALLOC(Robot, n_clients);
   ret->n_bullets = 0;
