@@ -40,14 +40,18 @@ typedef u8 bool;
 
 /* MEMORY MANAGEMENT */
 
-static inline void* my_assert(void* ptr)
+static inline void* my_assert(void* ptr, const char* file, unsigned int line)
 {
-  assert(ptr);
+  if (!ptr)
+  {
+    printf("alloc failed, file %s, line %u\n", file, line);
+    abort();
+  }
   return ptr;
 }
 
-#define ALLOC(t,n)       (t*) my_assert(malloc(sizeof(t) * n))
-#define REALLOC(ptr,t,n) (t*) my_assert(realloc(ptr, sizeof(t) * n))
+#define ALLOC(t,n)       (t*) my_assert(malloc(sizeof(t) * n),       __FILE__, __LINE__)
+#define REALLOC(ptr,t,n) (t*) my_assert(realloc(ptr, sizeof(t) * n), __FILE__, __LINE__)
 
 /* DIRTY STUFF */
 
@@ -62,5 +66,7 @@ static inline double Angle_ToRad(double t)
     t -= 360.0;
   return t * PI / 180.0;
 }
+
+#define FRAMERATE 60
 
 #endif

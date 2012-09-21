@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 {
   char* interface = "127.0.0.1";
   u32   port      = 4242;
-  u32   n_clients = 2;
+  u32   n_clients = 1;
 
   opterr = 0;
   int c;
@@ -73,21 +73,22 @@ int main(int argc, char** argv)
   }
   
   State* state = State_New(n_clients);
+
+  FILE* display_fh = TCP_Accept(server);
+
   for (u32 i = 0; i < n_clients; i++)
   {
     state->fh[i] = TCP_Accept(server);
     state->fd[i] = fileno(state->fh[i]);
   }
   int fd_max = state->fd[n_clients - 1] + 1;
-  
+
   {
-    Robot tmp = { 42.0, 0.0, 90.0, 100.0 };
+    Robot tmp = { 1042.0, 200.0, 45.0, 100.0 };
     state->robot[0] = tmp;
   }
-  {
-    Robot tmp = { 36.0, 1.0, 0.0,  26.0  };
-    state->robot[1] = tmp;
-  }
+
+  struct timeval tv = { 0, 1000000 / FRAMERATE };
   
   fd_set fds;
   while (42)
@@ -96,7 +97,7 @@ int main(int argc, char** argv)
     for (u32 i = 0; i < n_clients; i++)
       FD_SET(state->fd[i], &fds);
 
-    select(fd_max, &fds, NULL, NULL, NULL);
+    select(fd_max, &fds, NULL, NULL, &tv);
 
     for (u32 i = 0; i < n_clients; i++)
       if (FD_ISSET(state->fd[i], &fds))
@@ -105,7 +106,7 @@ int main(int argc, char** argv)
 	State_Update(state, i, c);
       }
 
-    State_Debug(state);
+    State_Send(display_fh, state);
   }
 
   for (u32 i = 0; i < n_clients; i++)

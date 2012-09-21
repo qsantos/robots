@@ -17,11 +17,12 @@
 \*/
 
 #ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include "socket.h"
 #include "comm.h"
@@ -64,8 +65,12 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  Command cmd = { FORWARD, 1.0 };
-  Command_Send(server, cmd);
+  while (42)
+  {
+    Command cmd = { FORWARD, 5.0 };
+    Command_Send(server, cmd);
+    usleep(1000000 / FRAMERATE);
+  }
 
   fclose(server);
 
