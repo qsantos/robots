@@ -49,7 +49,10 @@ void State_Delete(State* s)
 void State_Send(FILE* f, State* s)
 {
   assert(s);
-  fwrite(s,         sizeof(u32),    2,           f);
+  printf("s = %p\n", (void*) s);
+  printf("> %lu\n", s->n_robots);
+  int ret = fwrite(s,         sizeof(u32),    2,           f);
+  printf("Write = %u\n", ret);
   fwrite(s->robot,  sizeof(Robot),  s->n_robots, f);
   fwrite(s->bullet, sizeof(Bullet), s->n_bullets, f);
 }
@@ -57,11 +60,15 @@ void State_Send(FILE* f, State* s)
 State* State_Get(FILE* f)
 {
   State* s = ALLOC(State, 1);
-  fread(s, sizeof(u32), 2, f);
+  int ret = fread(s, sizeof(u32), 2, f);
+  printf("< %lu\n", s->n_robots);
+  printf("Read = %u\n", ret);
   s->robot = ALLOC(Robot, s->n_robots);
   fread(s->robot, sizeof(Robot), s->n_robots, f);
   s->bullet = ALLOC(Bullet, s->n_bullets);
   fread(s->bullet, sizeof(Bullet), s->n_bullets, f);
+  s->fh = NULL;
+  s->fd = NULL;
   return s;
 }
 
