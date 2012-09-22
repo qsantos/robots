@@ -19,6 +19,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define XOPEN_SOURCE 600
+#include <math.h>
 #include <assert.h>
 #include <stdlib.h>
 
@@ -58,13 +60,19 @@ static inline void* my_assert(void* ptr, const char* file, unsigned int line)
 #define PACKED __attribute__((packed))
 
 #define PI (3.14159265358979323846)
-static inline double Angle_ToRad(double t)
+static inline double deg2rad(double t)
 {
-  while (t < -180.0)
+  t = fmod(t, 360.0);
+  if (t < -180.0)
     t += 360.0;
-  while (t >= 180.0)
-    t -= 360.0;
   return t * PI / 180.0;
+}
+static inline double rad2deg(double t)
+{
+  t = fmod(t, PI);
+  if (t < -PI/2)
+    t += PI;
+  return t * 180.0 / PI;
 }
 
 #define FRAMERATE 60

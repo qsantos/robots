@@ -77,12 +77,12 @@ void State_Update(State* s, u32 id, Command c)
   switch (c.type)
   {
   case FORWARD:
-    s->robot[id].x += c.amount * cos(s->robot[id].angle);
-    s->robot[id].y += c.amount * sin(s->robot[id].angle);
+    s->robot[id].x += c.amount * sin(s->robot[id].angle);
+    s->robot[id].y -= c.amount * cos(s->robot[id].angle);
     break;
 
   case ROTATE:
-    s->robot[id].angle += Angle_ToRad(c.amount);
+    s->robot[id].angle += deg2rad(c.amount);
     break;
 
   case FIRE:
@@ -91,7 +91,7 @@ void State_Update(State* s, u32 id, Command c)
     
     s->bullet[s->n_bullets - 1].x  = s->robot[id].x;
     s->bullet[s->n_bullets - 1].y  = s->robot[id].y;
-    s->bullet[s->n_bullets - 1].angle = Angle_ToRad(c.amount);
+    s->bullet[s->n_bullets - 1].angle = deg2rad(c.amount);
     s->bullet[s->n_bullets - 1].energy = c.amount;
     
     break;

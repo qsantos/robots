@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   int fd_max = state->fd[n_clients - 1] + 1;
 
   {
-    Robot tmp = { 500.0, 100.0, 45.0, 100.0 };
+    Robot tmp = { 960, 540, deg2rad(30.0), 100.0 };
     state->robot[0] = tmp;
   }
 
