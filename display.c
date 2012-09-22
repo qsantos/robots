@@ -49,7 +49,6 @@ void Robot_Display(Robot* r)
   glPushMatrix();
   glTranslated(r->x, r->y, 0);
   glRotatef(180+rad2deg(r->angle), 0.0, 0.0, 1.0);
-//  glRotatef(0, 0.0, 0.0, 1.0);
   glTranslatef(-ROBOT_DIM/2, -ROBOT_DIM/2, 0);
 
   glBindTexture(GL_TEXTURE_2D, texture[TEX_TANK]);

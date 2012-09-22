@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
   while (42)
   {
-    Command cmd = { FORWARD, 5.0 };
+    Command cmd = { FORWARD, 1.0 };
     Command_Send(server, cmd);
     usleep(1000000 / FRAMERATE);
   }

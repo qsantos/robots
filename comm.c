@@ -57,7 +57,6 @@ void State_Send(FILE* f, State* s)
 
 State* State_Get(FILE* f)
 {
-  puts("Got state !");
   State* s = ALLOC(State, 1);
   fread(s, sizeof(u32), 2, f);
   s->robot = ALLOC(Robot, s->n_robots);
@@ -130,14 +129,12 @@ void State_Debug(State* s)
 
 void Command_Send(FILE* f, Command c)
 {
-  puts("Sent");
   fwrite(&c, sizeof(Command), 1, f);
   fflush(f);
 }
 
 Command Command_Get(FILE* f)
 {
-  puts("Got command !");
   Command c;
   fread(&c, sizeof(Command), 1, f);
   return c;
