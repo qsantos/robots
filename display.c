@@ -186,6 +186,7 @@ int main(int argc, char** argv)
   while (running)
   {
     State* s = State_Get(server);
+    
     glDisplay(s);
     free(s->bullet);
     free(s->robot);

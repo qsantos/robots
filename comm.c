@@ -49,20 +49,16 @@ void State_Delete(State* s)
 void State_Send(FILE* f, State* s)
 {
   assert(s);
-  printf("s = %p\n", (void*) s);
-  printf("> %lu\n", s->n_robots);
-  int ret = fwrite(s,         sizeof(u32),    2,           f);
-  printf("Write = %u\n", ret);
+  fwrite(s,         sizeof(u32),    2,           f);
   fwrite(s->robot,  sizeof(Robot),  s->n_robots, f);
   fwrite(s->bullet, sizeof(Bullet), s->n_bullets, f);
 }
 
 State* State_Get(FILE* f)
 {
+  puts("Got state !");
   State* s = ALLOC(State, 1);
-  int ret = fread(s, sizeof(u32), 2, f);
-  printf("< %lu\n", s->n_robots);
-  printf("Read = %u\n", ret);
+  fread(s, sizeof(u32), 2, f);
   s->robot = ALLOC(Robot, s->n_robots);
   fread(s->robot, sizeof(Robot), s->n_robots, f);
   s->bullet = ALLOC(Bullet, s->n_bullets);
@@ -75,6 +71,7 @@ State* State_Get(FILE* f)
 void State_Update(State* s, u32 id, Command c)
 {
   assert(id < s->n_robots);
+  State_Debug(s);
 
   switch (c.type)
   {
@@ -98,6 +95,8 @@ void State_Update(State* s, u32 id, Command c)
     
     break;
   }
+  State_Debug(s);
+  printf("\n\n\n\n\n\n");
 }
 
 void State_Debug(State* s)
@@ -135,6 +134,7 @@ void Command_Send(FILE* f, Command c)
 
 Command Command_Get(FILE* f)
 {
+  puts("Got command !");
   Command c;
   fread(&c, sizeof(Command), 1, f);
   return c;

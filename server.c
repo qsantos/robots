@@ -88,8 +88,7 @@ int main(int argc, char** argv)
     state->robot[0] = tmp;
   }
 
-  struct timeval tv = { 0, 1000000 / FRAMERATE };
-  
+  printf("Starting simulation\n");
   fd_set fds;
   while (42)
   {
@@ -97,6 +96,7 @@ int main(int argc, char** argv)
     for (u32 i = 0; i < n_clients; i++)
       FD_SET(state->fd[i], &fds);
 
+    struct timeval tv = { 0, 1000000 / FRAMERATE };
     select(fd_max, &fds, NULL, NULL, &tv);
 
     for (u32 i = 0; i < n_clients; i++)
