@@ -52,6 +52,7 @@ void State_Send(FILE* f, State* s)
   fwrite(s,         sizeof(u32),    2,           f);
   fwrite(s->robot,  sizeof(Robot),  s->n_robots, f);
   fwrite(s->bullet, sizeof(Bullet), s->n_bullets, f);
+  fflush(f);
 }
 
 State* State_Get(FILE* f)
@@ -129,7 +130,9 @@ void State_Debug(State* s)
 
 void Command_Send(FILE* f, Command c)
 {
+  puts("Sent");
   fwrite(&c, sizeof(Command), 1, f);
+  fflush(f);
 }
 
 Command Command_Get(FILE* f)

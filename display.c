@@ -41,8 +41,8 @@ const char* tex_name[] = { "img/grass.png", "img/tank.png" };
 
 #define ROBOT_DIM 150
 
-int width  = 1024;
-int height = 768;
+int width  = 1920;
+int height = 1080;
 
 void Robot_Display(Robot* r)
 {
