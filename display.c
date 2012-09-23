@@ -21,6 +21,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <ctype.h>
 #include <GL/glfw.h>
 #include <SOIL/SOIL.h>
@@ -41,8 +42,10 @@ const char* tex_name[] = { "img/grass.png", "img/tank.png" };
 
 #define ROBOT_DIM 150
 
-int width  = 1920;
-int height = 1080;
+float width  = 1920;
+float height = 1080;
+int   x      = 0;
+int   y      = 0;
 
 void Robot_Display(Robot* r)
 {
@@ -87,7 +90,14 @@ int load_textures(void)
 
 void glDisplay(State* s)
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
+  glLoadIdentity();
+  glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
+  
+  glfwGetMousePos(&x, &y);
+  glTranslatef(width / 2 - x, height / 2 - y, 0);
+  float zoom = pow(1.1, glfwGetMouseWheel());
+  glScalef(zoom, zoom, zoom);
 
   /* Display background */
   glBindTexture(GL_TEXTURE_2D, texture[TEX_GROUND]);
@@ -114,20 +124,23 @@ void glDisplay(State* s)
 
 void glInit(void)
 {
+  // "background"
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  
+  // two dimensionnal mode
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(0, width, height, 0, 0, 1);
-
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glTranslatef(0.375, 0.375, 0);
 
+  // we won't need this either
   glDisable(GL_DEPTH_TEST);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  // enables transparency
   glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+  //textures
   glEnable(GL_TEXTURE_2D);
   load_textures();
 }
@@ -186,7 +199,7 @@ int main(int argc, char** argv)
   while (running)
   {
     State* s = State_Get(server);
-    
+
     glDisplay(s);
     free(s->bullet);
     free(s->robot);

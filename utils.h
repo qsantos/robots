@@ -62,17 +62,11 @@ static inline void* my_assert(void* ptr, const char* file, unsigned int line)
 #define PI (3.14159265358979323846)
 static inline double deg2rad(double t)
 {
-  t = fmod(t, 360.0);
-  if (t < -180.0)
-    t += 360.0;
-  return t * PI / 180.0;
+  return fmod(t, 360) * PI / 180.0;
 }
 static inline double rad2deg(double t)
 {
-  t = fmod(t, PI);
-  if (t < -PI/2)
-    t += PI;
-  return t * 180.0 / PI;
+  return fmod(t, 2*PI) * 180.0 / PI;
 }
 
 #define FRAMERATE 60

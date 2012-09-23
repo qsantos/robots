@@ -3,7 +3,7 @@ OFILES_CLIENT  := $(OFILES) client.o
 OFILES_SERVER  := $(OFILES) server.o
 OFILES_DISPLAY := $(OFILES) display.o
 
-CFLAGS  := -Wall -O3 -Wextra -pedantic -ansi -std=c99 -g
+CFLAGS  := -Wall -Wextra -pedantic -ansi -std=c99 -O3
 LDFLAGS := -lm -lGL -lglfw -lSOIL
 
 .PHONY: all clean destroy rebuild
@@ -27,9 +27,9 @@ display: $(OFILES_DISPLAY)
 	@gcc $(CFLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(OFILES_SERVER) $(OFILES_CLIENT)
+	-rm -f $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)
 
-destroy:
-	-rm -f $(OFILES_SERVER) $(OFILES_CLIENT) client server display
+destroy: clean
+	-rm -f client server display
 
-rebuild: clean all
+rebuild: destroy all
