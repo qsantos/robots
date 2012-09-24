@@ -27,9 +27,11 @@ display: $(OFILES_DISPLAY)
 	@gcc $(CFLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)
+	@echo " [RM] $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)"
+	-@rm -f $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)
 
 destroy: clean
-	-rm -f client server display
+	@echo " [RM] client server display"
+	-@rm -f client server display
 
 rebuild: destroy all
