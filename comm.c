@@ -80,8 +80,12 @@ void State_Update(State* s, u32 id, Command c)
     s->robot[id].y -= c.amount * cos(s->robot[id].angle);
     break;
 
-  case ROTATE:
+  case TURN:
     s->robot[id].angle += deg2rad(c.amount);
+    break;
+  
+  case TURNGUN:
+    s->robot[id].gunAngle += deg2rad(c.amount);
     break;
 
   case FIRE:
@@ -90,7 +94,7 @@ void State_Update(State* s, u32 id, Command c)
     
     s->bullet[s->n_bullets - 1].x  = s->robot[id].x;
     s->bullet[s->n_bullets - 1].y  = s->robot[id].y;
-    s->bullet[s->n_bullets - 1].angle = deg2rad(c.amount);
+    s->bullet[s->n_bullets - 1].angle = s->robot[id].angle + s->robot[id].gunAngle;
     s->bullet[s->n_bullets - 1].energy = c.amount;
     
     break;
@@ -102,29 +106,24 @@ void State_Update(State* s, u32 id, Command c)
 void State_Debug(State* s)
 {
   assert(s);
-  printf("State information\n-----------------\n\n");
-  printf("# robots : %lu\n\n", s->n_robots);
-  printf("# bullets : %lu\n\n", s->n_bullets);
-
+  
+  printf("==================================\n");
+  
+  printf("Robots:\n");
   for (u32 i = 0; i < s->n_robots; i++)
   {
-    printf(" > Robot #%lu\n", i);
-    printf("    x      %f\n", s->robot[i].x);
-    printf("    y      %f\n", s->robot[i].y);
-    printf("    angle  %f\n", s->robot[i].angle);
-    printf("    energy %f\n", s->robot[i].energy);
-    putchar('\n');
+    Robot r = s->robot[i];
+    printf("#%lu: (%f, %f) %f° %f° %f%%\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
   }
-
+  printf("\n");
+  
+  printf("Bullets:\n");
   for (u32 i = 0; i < s->n_bullets; i++)
   {
-    printf(" > Bullet #%lu\n", i);
-    printf("    x      %f\n", s->bullet[i].x);
-    printf("    y      %f\n", s->bullet[i].y);
-    printf("    angle  %f\n", s->bullet[i].angle);
-    printf("    energy %f\n", s->bullet[i].energy);
-    putchar('\n');
+    Bullet b = s->bullet[i];
+    printf("#%lu: (%f, %f), %f°, %f%%\n", i, b.x, b.y, b.angle, b.energy);
   }
+  printf("\n");
 }
 
 void Command_Send(FILE* f, Command c)

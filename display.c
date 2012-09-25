@@ -32,15 +32,20 @@
 enum
 {
   TEX_GROUND = 0,
-  TEX_TANK,
+  TEX_CHASSIS,
+  TEX_GUN,
   TEX_NB
 };
 
 int texture[TEX_NB];
 
-const char* tex_name[] = { "img/grass.png", "img/tank.png" };
+const char* tex_name[] = { "img/grass.png", "img/chassis.png", "img/gun.png" };
 
-#define ROBOT_DIM 150
+#define TANK_WIDTH   76
+#define TANK_HEIGHT 116
+
+#define GUN_WIDTH   52
+#define GUN_HEIGHT 130
 
 float width  = 1920;
 float height = 1080;
@@ -51,19 +56,35 @@ void Robot_Display(Robot* r)
 {
   glPushMatrix();
   glTranslated(r->x, r->y, 0);
-  glRotatef(180+rad2deg(r->angle), 0.0, 0.0, 1.0);
-  glTranslatef(-ROBOT_DIM/2, -ROBOT_DIM/2, 0);
+  glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
+  glTranslatef(-TANK_WIDTH/2, -TANK_WIDTH/2, 0);
 
-  glBindTexture(GL_TEXTURE_2D, texture[TEX_TANK]);
+  glBindTexture(GL_TEXTURE_2D, texture[TEX_CHASSIS]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0,         1.0);
+  glVertex2f  (0,           0 );
+  glTexCoord2f(1.0,         1.0);
+  glVertex2f  (TANK_WIDTH,  0);
+  glTexCoord2f(1.0,         0.0);
+  glVertex2f  (TANK_WIDTH,  TANK_HEIGHT);
+  glTexCoord2f(0.0,         0.0);
+  glVertex2f  (0,           TANK_HEIGHT);
+  glEnd();
+  
+  glTranslatef(TANK_WIDTH/2, 78, 0);
+  glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
+  glTranslatef(-GUN_WIDTH/2, -100, 0);
+  
+  glBindTexture(GL_TEXTURE_2D, texture[TEX_GUN]);
   glBegin(GL_QUADS);
   glTexCoord2f(0.0,       1.0);
   glVertex2f  (0,         0 );
   glTexCoord2f(1.0,       1.0);
-  glVertex2f  (ROBOT_DIM, 0);
+  glVertex2f  (GUN_WIDTH, 0);
   glTexCoord2f(1.0,       0.0);
-  glVertex2f  (ROBOT_DIM, ROBOT_DIM);
+  glVertex2f  (GUN_WIDTH, GUN_HEIGHT);
   glTexCoord2f(0.0,       0.0);
-  glVertex2f  (0,         ROBOT_DIM);
+  glVertex2f  (0,         GUN_HEIGHT);
   glEnd();
 
   glPopMatrix();

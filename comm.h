@@ -26,7 +26,8 @@
 typedef enum
 {
   FORWARD,
-  ROTATE,
+  TURN,
+  TURNGUN,
   FIRE,
 } Command_Type;
 
@@ -44,6 +45,7 @@ typedef struct PACKED
   double x;
   double y;
   double angle;
+  double gunAngle;
   double energy;
 } Robot;
 

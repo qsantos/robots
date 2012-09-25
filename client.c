@@ -67,10 +67,15 @@ int main(int argc, char** argv)
 
   while (42)
   {
-    Command cmd1 = { FORWARD, 5.0 };
+    Command cmd1 = { FORWARD, 1.0 };
     Command_Send(server, cmd1);
-    Command cmd2 = { ROTATE, 0.5 };
+    
+    Command cmd2 = { TURN, 0.1 };
     Command_Send(server, cmd2);
+    
+    Command cmd3 = { TURNGUN, -0.3 };
+    Command_Send(server, cmd3);
+    
     usleep(1000000 / FRAMERATE);
   }
 
