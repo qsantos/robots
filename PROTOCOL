@@ -1,0 +1,67 @@
+=== Connection and waiting phase ===
+
+When the client connects, the server first send the magic word (0xXX) and the version of the protocol (0x01).
+
+Server > 0xXX 0x01
+
+It then proceed to send information about the game, in the following order:
+
+Server > height    (uint32)
+Server > width     (uint32)
+Server > n_slots   (uint32)
+
+At this point, the server considers that the client is fully connected and waiting for a game. Every time the number of currently connected clients (n_clients) changes (including the client who just connected, the server sends n_clients to *every* connected client:
+
+Server > n_clients (uint32)
+
+= Example =
+
+S wait for connections. A connects and gets:
+
+S>A: 0xXX 0x01 height width n_slots 1
+
+For there are currently one connected client (A). Then, B too connects to S and the servers sends:
+
+S>B 0xXX 0x01 height width n_slots 2
+S>A 2
+
+In other worlds, the server send the new number of currently connected clients to both A and B.
+
+
+
+=== Initialization phase ===
+
+When n_clients reaches n_slots, the game is settled and the server sends to each client the initial state of its robot:
+
+Server > x        (uint32)
+Server > y        (uint32)
+Server > angle    (float)
+Server > gunAngle (float)
+Server > energy   (float)
+
+When the game is ready to start, the server sends the start message (0x42) to every client:
+
+Server > 0x42
+
+From now on, the servers only sends data for in-game events concerning the client, and the clients only sends data for client's robot orders.
+
+
+
+=== Game phase ===
+
+== Orders ==
+
+= Movement =
+
+The movement orders are ADVANCE (0x01), TURN (0x02) and TURNGUN (0x03). They actually sets the speed (may be negative) at which the robot moves forward, turn to the right, or turn its gun to the right. The parameter is the desired speed.
+
+Client > COMMAND
+Client > speed   (float)
+
+
+= FIRE =
+
+This makes the robot to fire a bullet of energy immediatly. The parameter is the desired amount of energy in the bullet:
+
+Client > 0x04
+Client > energy (float)
