@@ -100,7 +100,6 @@ void State_Update(State* s, u32 id, Command c)
     break;
   }
   State_Debug(s);
-  printf("\n\n\n\n\n\n");
 }
 
 void State_Debug(State* s)

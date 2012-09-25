@@ -29,6 +29,7 @@
 #include "comm.h"
 #include "socket.h"
 
+// texture information
 enum
 {
   TEX_GROUND = 0,
@@ -36,16 +37,24 @@ enum
   TEX_GUN,
   TEX_NB
 };
-
-int texture[TEX_NB];
-
-const char* tex_name[] = { "img/grass.png", "img/chassis.png", "img/gun.png" };
-
-#define TANK_WIDTH   76
-#define TANK_HEIGHT 116
-
-#define GUN_WIDTH   52
-#define GUN_HEIGHT 130
+const char* tex_name  [TEX_NB] = { "img/grass.png", "img/chassis.png", "img/gun.png" };
+int         texture   [TEX_NB];
+int         tex_width [TEX_NB];
+int         tex_height[TEX_NB];
+void drawTexture(int tex)
+{
+  glBindTexture(GL_TEXTURE_2D, texture[tex]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0,            1.0);
+  glVertex2f  (0,              0 );
+  glTexCoord2f(1.0,            1.0);
+  glVertex2f  (tex_width[tex], 0);
+  glTexCoord2f(1.0,            0.0);
+  glVertex2f  (tex_width[tex], tex_height[tex]);
+  glTexCoord2f(0.0,            0.0);
+  glVertex2f  (0,              tex_height[tex]);
+  glEnd();
+}
 
 float width  = 1920;
 float height = 1080;
@@ -55,37 +64,16 @@ int   y      = 0;
 void Robot_Display(Robot* r)
 {
   glPushMatrix();
+  
   glTranslated(r->x, r->y, 0);
   glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
-  glTranslatef(-TANK_WIDTH/2, -TANK_WIDTH/2, 0);
-
-  glBindTexture(GL_TEXTURE_2D, texture[TEX_CHASSIS]);
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0,         1.0);
-  glVertex2f  (0,           0 );
-  glTexCoord2f(1.0,         1.0);
-  glVertex2f  (TANK_WIDTH,  0);
-  glTexCoord2f(1.0,         0.0);
-  glVertex2f  (TANK_WIDTH,  TANK_HEIGHT);
-  glTexCoord2f(0.0,         0.0);
-  glVertex2f  (0,           TANK_HEIGHT);
-  glEnd();
+  glTranslatef(-tex_width[TEX_CHASSIS]/2, -tex_width[TEX_CHASSIS]/2, 0);
+  drawTexture(TEX_CHASSIS);
   
-  glTranslatef(TANK_WIDTH/2, 78, 0);
+  glTranslatef(tex_width[TEX_CHASSIS]/2, 78, 0);
   glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
-  glTranslatef(-GUN_WIDTH/2, -100, 0);
-  
-  glBindTexture(GL_TEXTURE_2D, texture[TEX_GUN]);
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0,       1.0);
-  glVertex2f  (0,         0 );
-  glTexCoord2f(1.0,       1.0);
-  glVertex2f  (GUN_WIDTH, 0);
-  glTexCoord2f(1.0,       0.0);
-  glVertex2f  (GUN_WIDTH, GUN_HEIGHT);
-  glTexCoord2f(0.0,       0.0);
-  glVertex2f  (0,         GUN_HEIGHT);
-  glEnd();
+  glTranslatef(-tex_width[TEX_GUN]/2, -100, 0);
+  drawTexture(TEX_GUN);
 
   glPopMatrix();
 }
@@ -104,6 +92,8 @@ int load_textures(void)
     glBindTexture(GL_TEXTURE_2D, texture[i]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width[i]);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height[i]);
   }
   
   return 1;
