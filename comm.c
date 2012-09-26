@@ -75,7 +75,7 @@ void State_Update(State* s, u32 id, Command c)
 
   switch (c.type)
   {
-  case FORWARD:
+  case ADVANCE:
     s->robot[id].x += c.amount * sin(s->robot[id].angle);
     s->robot[id].y -= c.amount * cos(s->robot[id].angle);
     break;

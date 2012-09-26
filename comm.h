@@ -25,7 +25,7 @@
 
 typedef enum
 {
-  FORWARD,
+  ADVANCE,
   TURN,
   TURNGUN,
   FIRE,
