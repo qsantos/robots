@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
   while (42)
   {
-    Command cmd1 = { FORWARD, 1.0 };
+    Command cmd1 = { ADVANCE, 1.0 };
     Command_Send(server, cmd1);
     
     Command cmd2 = { TURN, 0.1 };

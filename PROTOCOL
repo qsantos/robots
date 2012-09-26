@@ -29,21 +29,19 @@ In other worlds, the server send the new number of currently connected clients t
 
 
 
+
 === Initialization phase ===
 
 When n_clients reaches n_slots, the game is settled and the server sends to each client the initial state of its robot:
 
-Server > x        (uint32)
-Server > y        (uint32)
-Server > angle    (float)
-Server > gunAngle (float)
-Server > energy   (float)
+Server > Robot (sea Robot information)
 
 When the game is ready to start, the server sends the start message (0x42) to every client:
 
 Server > 0x42
 
 From now on, the servers only sends data for in-game events concerning the client, and the clients only sends data for client's robot orders.
+
 
 
 
@@ -65,3 +63,44 @@ This makes the robot to fire a bullet of energy immediatly. The parameter is the
 
 Client > 0x04
 Client > energy (float)
+
+
+
+== Events ==
+
+= TICK =
+
+A tick is the atomic unit of time in a game. At every tick, the server broadcast a tick event:
+
+Server > 0x01
+
+
+= SPOTTED =
+
+Whenever another robot is in sight, the client gets this event:
+
+Server > 0x02
+Server > Robot (see Robot information)
+
+
+= HIT =
+
+
+= HITBY =
+
+= COLLIDE =
+
+
+
+=== Data transfers ===
+
+== Robot information ==
+
+When a robot's data need to be sent, the following scheme is used:
+
+Server > id       (uint32)
+Server > x        (uint32)
+Server > y        (uint32)
+Server > angle    (float)
+Server > gunAngle (float)
+Server > energy   (float)
