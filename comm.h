@@ -59,6 +59,14 @@ typedef struct PACKED
 
 typedef struct PACKED
 {
+  float height;
+  float width;
+  u32 n_slots;
+  u32 n_clients;
+} Game;
+
+typedef struct PACKED
+{
   u32     n_robots;
   u32     n_bullets;
   
