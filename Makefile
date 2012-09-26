@@ -1,9 +1,9 @@
-OFILES         := socket.o comm.o
-OFILES_CLIENT  := $(OFILES) client.o
-OFILES_SERVER  := $(OFILES) server.o
-OFILES_DISPLAY := $(OFILES) display.o
+OFILES         := socket.o
+OFILES_CLIENT  := $(OFILES) main_client.o
+OFILES_SERVER  := $(OFILES) main_server.o  server.o
+OFILES_DISPLAY := $(OFILES) main_display.o display.o
 
-CFLAGS  := -Wall -Wextra -pedantic -ansi -std=c99 -O3
+CFLAGS  := -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3
 LDFLAGS := -lm -lGL -lglfw -lSOIL
 
 .PHONY: all clean destroy rebuild

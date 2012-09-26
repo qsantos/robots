@@ -1,3 +1,19 @@
+==== DISPLAY DUMPING ====
+
+Whenever the server find it cool, it proceeds to dump game information to the display client with following order:
+
+Server > Game
+Server > n_robots  (uint32)
+Server > Robot     (n_robots items)
+#Server > n_bullets (uint32)
+#Server > Bullet    (n_bullet items)
+
+
+
+
+
+==== ROBOT INTELLIGCENCE COMMUNICATION ====
+
 === Connection and waiting phase ===
 
 When the client connects, the server first send the magic word (0xXX) and the version of the protocol (0x01).
@@ -6,8 +22,8 @@ Server > 0xXX 0x01
 
 It then proceed to send information about the game, in the following order:
 
-Server > height    (uint32)
-Server > width     (uint32)
+Server > height    (float)
+Server > width     (float)
 Server > n_slots   (uint32)
 
 At this point, the server considers that the client is fully connected and waiting for a game. Every time the number of currently connected clients (n_clients) changes (including the client who just connected, the server sends n_clients to *every* connected client:
@@ -51,7 +67,7 @@ From now on, the servers only sends data for in-game events concerning the clien
 
 = Movement =
 
-The movement orders are ADVANCE (0x01), TURN (0x02) and TURNGUN (0x03). They actually sets the speed (may be negative) at which the robot moves forward, turn to the right, or turn its gun to the right. The parameter is the desired speed.
+The movement orders are ADVANCE (0x01), TURN (0x02) and TURNGUN (0x03). They actually sets the (may be negative) at which the robot moves forward, turn to the right, or turn its gun to the right. The parameter is the desired speed.
 
 Client > COMMAND
 Client > speed   (float)
@@ -92,15 +108,17 @@ Server > Robot (see Robot information)
 
 
 
-=== Data transfers ===
+==== GENERIC DATA TRANSFERS ====
 
 == Robot information ==
 
 When a robot's data need to be sent, the following scheme is used:
 
-Server > id       (uint32)
-Server > x        (uint32)
-Server > y        (uint32)
-Server > angle    (float)
-Server > gunAngle (float)
-Server > energy   (float)
+Server > x            (float)
+Server > y            (float)
+Server > angle        (float)
+Server > gunAngle     (float)
+Server > energy       (float)
+Server > velocity     (float)
+Server > turnSpeed    (float)
+Server > turnGunSpeed (float)

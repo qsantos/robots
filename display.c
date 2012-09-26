@@ -1,32 +1,12 @@
-/*\
- *  This is an awesome programm simulating awesome batlles of awesome robot tanks
- *  Copyright (C) 2012  Thomas GREGOIRE, Quentin SANTOS
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-\*/
+#include "display.h"
 
-#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <ctype.h>
 #include <GL/glfw.h>
 #include <SOIL/SOIL.h>
 
-#include "comm.h"
 #include "socket.h"
 
 // texture information
@@ -41,47 +21,41 @@ const char* tex_name  [TEX_NB] = { "img/grass.png", "img/chassis.png", "img/gun.
 int         texture   [TEX_NB];
 int         tex_width [TEX_NB];
 int         tex_height[TEX_NB];
-void drawTexture(int tex)
-{
-  glBindTexture(GL_TEXTURE_2D, texture[tex]);
-  glBegin(GL_QUADS);
-  glTexCoord2f(0.0,            1.0);
-  glVertex2f  (0,              0 );
-  glTexCoord2f(1.0,            1.0);
-  glVertex2f  (tex_width[tex], 0);
-  glTexCoord2f(1.0,            0.0);
-  glVertex2f  (tex_width[tex], tex_height[tex]);
-  glTexCoord2f(0.0,            0.0);
-  glVertex2f  (0,              tex_height[tex]);
-  glEnd();
-}
 
-float width  = 1920;
-float height = 1080;
-int   x      = 0;
-int   y      = 0;
+int winWidth  = 1024;
+int winHeight = 768;
+int x;
+int y;
 
-void Robot_Display(Robot* r)
+Display* Display_New(string IP, u16 port)
 {
-  glPushMatrix();
+  if (!glfwInit())
+    return NULL;
+  if (!glfwOpenWindow(winWidth, winHeight, 0, 0, 0, 0, 0, 0, GLFW_WINDOW))
+  {
+    glfwTerminate();
+    return NULL;
+  }
   
-  glTranslated(r->x, r->y, 0);
-  glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
-  glTranslatef(-tex_width[TEX_CHASSIS]/2, -tex_width[TEX_CHASSIS]/2, 0);
-  drawTexture(TEX_CHASSIS);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   
-  glTranslatef(tex_width[TEX_CHASSIS]/2, 78, 0);
-  glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
-  glTranslatef(-tex_width[TEX_GUN]/2, -100, 0);
-  drawTexture(TEX_GUN);
-
-  glPopMatrix();
-}
-
-int load_textures(void)
-{
-  int i;
-  for (i = 0; i < TEX_NB; i++)
+  // two dimensionnal mode
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, winWidth, winHeight, 0, 0, 1);
+  glMatrixMode(GL_MODELVIEW);
+  
+  // we won't need this either
+  glDisable(GL_DEPTH_TEST);
+  
+  // enables transparency
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  //textures
+  glEnable(GL_TEXTURE_2D);
+  
+  for (int i = 0; i < TEX_NB; i++)
   {
     printf("Loading %s\n", tex_name[i]);
     texture[i] = SOIL_load_OGL_texture(tex_name[i], SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_INVERT_Y);
@@ -90,29 +64,74 @@ int load_textures(void)
       abort();
   
     glBindTexture(GL_TEXTURE_2D, texture[i]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width[i]);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height[i]);
   }
   
-  return 1;
+  
+  Display* ret = ALLOC(Display, 1);
+  ret->server = TCP_Connect(IP, port);
+  if (!ret->server)
+  {
+    fprintf(stderr, "Could not connect to the server\n");
+    return NULL;
+  }
+  ret->n_robots = 0;
+  ret->a_robots = 0;
+  ret->robot    = NULL;
+  
+  return ret;
 }
 
-void glDisplay(State* s)
+void Display_Delete(Display* d)
 {
+  assert(d);
+//  free(d->bullet);
+  free(d->robot);
+  fclose(d->server);
+  free(d);
+  glfwTerminate();
+}
+
+void Display_Update(Display* d)
+{
+  assert(d);
+  
+  fread(&d->game, sizeof(Game), 1, d->server);
+  
+  u32 nn_robots;
+  fread(&nn_robots, sizeof(u32), 1, d->server);
+  if (nn_robots > d->a_robots)
+  {
+    d->a_robots = nn_robots;
+    d->robot = REALLOC(d->robot, Robot, d->a_robots);
+  }
+  d->n_robots = nn_robots;
+  fread(d->robot, sizeof(Robot), d->n_robots, d->server);
+  
+  d->opened = glfwGetWindowParam(GLFW_OPENED);
+}
+
+void Display_Draw(Display* d)
+{
+  assert(d);
+  
   glClear(GL_COLOR_BUFFER_BIT);
   glLoadIdentity();
   glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
   
   glfwGetMousePos(&x, &y);
-  glTranslatef(width / 2 - x, height / 2 - y, 0);
+  glTranslatef(winWidth / 2 - x, winHeight / 2 - y, 0);
   float zoom = pow(1.1, glfwGetMouseWheel());
   glScalef(zoom, zoom, zoom);
 
   /* Display background */
   glBindTexture(GL_TEXTURE_2D, texture[TEX_GROUND]);
 
+  int width  = d->game.width;
+  int height = d->game.height;
   glBegin(GL_QUADS);
 
     glTexCoord2f(0.0,       1.0       );
@@ -129,99 +148,42 @@ void glDisplay(State* s)
     glVertex2f  (0,         height - 1);
   glEnd();
 
-  for (u32 i = 0; i < s->n_robots; i++)
-    Robot_Display(&s->robot[i]);
+  for (u32 i = 0; i < d->n_robots; i++)
+    Robot_Draw(&d->robot[i]);
+  
+  glfwSwapBuffers();
 }
 
-void glInit(void)
+void Robot_Draw(Robot* r)
 {
-  // "background"
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  assert(r);
   
-  // two dimensionnal mode
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0, width, height, 0, 0, 1);
-  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  
+  glTranslated(r->x, r->y, 0);
+  glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
+  glTranslatef(-tex_width[TEX_CHASSIS]/2, -tex_height[TEX_CHASSIS]/2, 0);
+  Texture_Draw(TEX_CHASSIS);
+  
+  glTranslatef(tex_width[TEX_CHASSIS]/2, 78, 0);
+  glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
+  glTranslatef(-tex_width[TEX_GUN]/2, -100, 0);
+  Texture_Draw(TEX_GUN);
 
-  // we won't need this either
-  glDisable(GL_DEPTH_TEST);
-
-  // enables transparency
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  //textures
-  glEnable(GL_TEXTURE_2D);
-  load_textures();
+  glPopMatrix();
 }
 
-int main(int argc, char** argv)
+void Texture_Draw(u32 tex)
 {
-  int running = GL_TRUE;
-
-  if (!glfwInit())
-    exit(EXIT_FAILURE);
-
-  if (!glfwOpenWindow(width, height, 0, 0, 0, 0, 0, 0, GLFW_WINDOW))
-  {
-    glfwTerminate();
-    exit(EXIT_FAILURE);
-  }
-
-  glInit();
-
-  char* interface = "127.0.0.1";
-  u32   port      = 4242;
-
-  opterr = 0;
-  int c;
-  while ((c = getopt(argc, argv, "i:p:")) != -1)
-    switch (c)
-    {
-    case 'i':
-      interface = optarg;
-      break;
-
-    case 'p':
-      port = (u32) atoi(optarg);
-      break;
-
-    case '?':
-      if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
-	fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-      else if (isprint(optopt))
-	fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-      else
-	fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-      return 1;
-
-    default:
-      abort();
-    }
-  
-  FILE* server = TCP_Connect(interface, port);
-  if (!server)
-  {
-    fprintf(stderr, "Could not connect to the server\n");
-    return 1;
-  }
-
-  while (running)
-  {
-    State* s = State_Get(server);
-
-    glDisplay(s);
-    free(s->bullet);
-    free(s->robot);
-    free(s);
-
-    glfwSwapBuffers();
-    running = glfwGetWindowParam(GLFW_OPENED);
-  }
-  
-  fclose(server);
-  
-  glfwTerminate();
-  exit(EXIT_SUCCESS);
+  glBindTexture(GL_TEXTURE_2D, texture[tex]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0,            1.0);
+  glVertex2f  (0,              0 );
+  glTexCoord2f(1.0,            1.0);
+  glVertex2f  (tex_width[tex], 0);
+  glTexCoord2f(1.0,            0.0);
+  glVertex2f  (tex_width[tex], tex_height[tex]);
+  glTexCoord2f(0.0,            0.0);
+  glVertex2f  (0,              tex_height[tex]);
+  glEnd();
 }

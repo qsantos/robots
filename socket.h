@@ -24,7 +24,7 @@
 #endif
 #include <stdio.h>
 
-#include "utils.h"
+#include "common.h"
 
 FILE* TCP_Connect (const string, u16);
 s32   TCP_ListenTo(const string, u16);
