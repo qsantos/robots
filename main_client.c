@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#define _XOPEN_SOURCE 500
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -78,6 +77,21 @@ int main(int argc, char** argv)
     fprintf(stderr, "Could not connect to the server\n");
     return 1;
   }
+  
+  u8 server_hello[2];
+  fread(&server_hello, 1, 2, server);
+  
+  Game game;
+  fread(&game, sizeof(Game), 1, server);
+  
+  while (game.n_clients < game.n_slots)
+    fread(&game.n_clients, sizeof(u32), 1, server);
+  
+  Robot r;
+  fread(&r, sizeof(Robot), 1, server);
+  
+  u8 start;
+  fread(&start, 1, 1, server);
 
   Order_Advance( 1.0);
   Order_Turn   ( 0.1);

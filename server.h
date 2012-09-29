@@ -44,7 +44,7 @@ void    Server_Delete       (Server*);
 void    Server_Debug        (Server*);
 void    Server_AcceptDisplay(Server*);
 void    Server_AcceptClients(Server*);
-void    Server_HandleOrder  (Server*, u32);
+bool    Server_HandleOrder  (Server*, u32);
 void    Server_Tick         (Server*);
 void    Server_Dump         (Server*, FILE*);
 void    Server_Loop         (Server*);

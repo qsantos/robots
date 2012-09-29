@@ -3,7 +3,7 @@ OFILES_CLIENT  := $(OFILES) main_client.o
 OFILES_SERVER  := $(OFILES) main_server.o  server.o
 OFILES_DISPLAY := $(OFILES) main_display.o display.o
 
-CFLAGS  := -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3
+CFLAGS  := -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500
 LDFLAGS := -lm -lGL -lglfw -lSOIL
 
 .PHONY: all clean destroy rebuild

@@ -19,9 +19,6 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
-#endif
 #include <stdio.h>
 
 #include "common.h"

@@ -16,14 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#define _XOPEN_SOURCE 500
 #include "server.h"
 
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
-#include <sys/select.h>
 #include <time.h>
+#include <sys/epoll.h>
+#include <fcntl.h>
 
 #include "socket.h"
 
@@ -98,31 +98,35 @@ void Server_Debug(Server* s)
 void Server_AcceptDisplay(Server* s)
 {
   s->display = TCP_Accept(s->listener);
-  s->game.n_clients++;
 }
 
 void Server_AcceptClients(Server* s)
 {
-  for (u32 i = 0; i < s->game.n_clients; i++)
+  for (u32 i = 0; i < s->game.n_slots; i++)
   {
     s->fh[i] = TCP_Accept(s->listener);
     s->fd[i] = fileno(s->fh[i]);
+    s->game.n_clients++;
     
     fwrite(&MAGIC_WORD,     1,            1, s->fh[i]);
     fwrite(&VERSION_NUMBER, 1,            1, s->fh[i]);
     fwrite(&s->game,        sizeof(Game), 1, s->fh[i]);
+    fflush(s->fh[i]);
     for (u32 j = 0; j < i; j++)
+    {
       fwrite(&s->game.n_clients, sizeof(u32), 1, s->fh[j]);
+      fflush(s->fh[j]);
+    }
   }
 }
 
-void Server_HandleOrder(Server* s, u32 id)
+bool Server_HandleOrder(Server* s, u32 id)
 {
-  u8 code;
-  fread(&code,  1, 1, s->fh[id]);
   
+  u8 code;
+  if (fread(&code,  sizeof(u8),    1, s->fh[id]) <= 0) return false;
   float param;
-  fread(&param, 4, 1, s->fh[id]);
+  if (fread(&param, sizeof(float), 1, s->fh[id]) <= 0) return false;
 
   switch (code)
   {
@@ -149,7 +153,9 @@ void Server_HandleOrder(Server* s, u32 id)
 */
     break;
   }
+  
   Server_Debug(s);
+  return true;
 }
 
 void Server_Tick(Server* s)
@@ -167,11 +173,11 @@ void Server_Tick(Server* s)
 void Server_Dump(Server* s, FILE* f)
 {
   assert(s);
-  fwrite(&s->game,      sizeof(Game),   1,            f);
-  fwrite(&s->n_robots,  sizeof(u32),    1,            f);
-  fwrite(s->robot,      sizeof(Robot),  s->n_robots,  f);
-//  fwrite(&s->n_bullets, sizeof(u32),    1,            f);
-//  fwrite(s->bullet,     sizeof(Bullet), s->n_bullets, f);
+  fwrite(&s->game,      sizeof(Game),   1,                  f);
+  fwrite(&s->n_robots,  sizeof(u32),    1,                  f);
+  fwrite(s->robot,      sizeof(Robot),  s->game.n_clients,  f);
+//  fwrite(&s->n_bullets, sizeof(u32),    1,                  f);
+//  fwrite(s->bullet,     sizeof(Bullet), s->n_bullets,       f);
   fflush(f);
 }
 
@@ -188,24 +194,36 @@ void Server_Loop(Server* s)
   {
     Robot r= { random() % (u32)s->game.width, random() % (u32)s->game.height, deg2rad(random() % 360), 0, 100.0, 0, 0, 0 };
     s->robot[i] = r;
+    fwrite(&r, sizeof(Robot), 1, s->fh[i]);
+    fflush(s->fh[i]);
   }
   for (u32 i = 0; i < s->game.n_clients; i++)
+  {
     fwrite(&START_MESSAGE, 1, 1, s->fh[i]);
+    fflush(s->fh[i]);
+  }
+
+
+  int epollfd = epoll_create(s->game.n_clients);
+  struct epoll_event  ev;
+  for (u32 i = 0; i < s->game.n_clients; i++)
+  {
+    int flags = fcntl (s->fd[i], F_GETFL, 0);
+    fcntl (s->fd[i], F_SETFL, flags | O_NONBLOCK);
+    ev.events   = EPOLLIN;
+    ev.data.u32 = i;
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, s->fd[i], &ev);
+  }
   
-  fd_set fds;
+  struct epoll_event events[10];
   while (42)
   {
-    FD_ZERO(&fds);
-    for (u32 i = 0; i < s->game.n_clients; i++)
-      FD_SET(s->fd[i], &fds);
-
-    struct timeval tv = { 0, 1000000 / FRAMERATE };
-    select(fd_max, &fds, NULL, NULL, &tv);
-
-    for (u32 i = 0; i < s->game.n_clients; i++)
-      if (FD_ISSET(s->fd[i], &fds))
-        Server_HandleOrder(s, i);
-
+    int n_events = epoll_wait(epollfd, events, 10, 1000 / FRAMERATE);
+    for (s32 i = 0; i < n_events; i++)
+    {
+      u32 client = events[i].data.u32;
+      while (Server_HandleOrder(s, client));
+    }
     Server_Tick(s);
     Server_Dump(s, s->display);
   }
