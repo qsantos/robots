@@ -65,9 +65,6 @@ int main(int argc, char** argv)
   Server_AcceptDisplay(server);
   Server_AcceptClients(server);
 
-  Robot tmp = { 50, 50, deg2rad(30.0), 0, 100.0, 0, 0, 0 };
-  server->robot[0] = tmp;
-
   printf("Starting simulation\n");
   Server_Loop(server);
   

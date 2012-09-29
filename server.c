@@ -16,18 +16,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 500
 #include "server.h"
 
 #include <assert.h>
 #include <math.h>
 #include <stdarg.h>
 #include <sys/select.h>
+#include <time.h>
 
 #include "socket.h"
 
 const u8 MAGIC_WORD     = 0x42;
 const u8 VERSION_NUMBER = 0x01;
+const u8 START_MESSAGE  = 0x42;
 
 Server* Server_New(string interface, u16 port, u32 n_clients)
 {
@@ -105,6 +107,7 @@ void Server_AcceptClients(Server* s)
   {
     s->fh[i] = TCP_Accept(s->listener);
     s->fd[i] = fileno(s->fh[i]);
+    
     fwrite(&MAGIC_WORD,     1,            1, s->fh[i]);
     fwrite(&VERSION_NUMBER, 1,            1, s->fh[i]);
     fwrite(&s->game,        sizeof(Game), 1, s->fh[i]);
@@ -179,6 +182,15 @@ void Server_Loop(Server* s)
     if (s->fd[i] > fd_max)
       fd_max = s->fd[i];
   fd_max++;
+  
+  srandom(time(NULL));
+  for (u32 i = 0; i < s->game.n_clients; i++)
+  {
+    Robot r= { random() % (u32)s->game.width, random() % (u32)s->game.height, deg2rad(random() % 360), 0, 100.0, 0, 0, 0 };
+    s->robot[i] = r;
+  }
+  for (u32 i = 0; i < s->game.n_clients; i++)
+    fwrite(&START_MESSAGE, 1, 1, s->fh[i]);
   
   fd_set fds;
   while (42)
