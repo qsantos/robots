@@ -18,12 +18,10 @@
 
 #include "server.h"
 
-#include <assert.h>
-#include <math.h>
-#include <stdarg.h>
 #include <time.h>
 #include <sys/epoll.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "socket.h"
 
@@ -44,8 +42,7 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
     return NULL;
   }
   
-  ret->fd        = ALLOC(int,   n_clients);
-  ret->fh        = ALLOC(FILE*, n_clients);
+  ret->client        = ALLOC(s32,   n_clients);
   ret->n_robots  = n_clients;
   ret->robot     = ALLOC(Robot, n_clients);
   
@@ -65,11 +62,10 @@ void Server_Delete(Server* s)
 //  free(s->bullet);
   free(s->robot);
   for (u32 i = 0; i < s->game.n_clients; i++)
-    fclose(s->fh[i]);
-  free(s->fh);
-  free(s->fd);
-  fclose(s->display);
-  TCP_Close(s->listener);
+    close(s->client[i]);
+  free(s->client);
+  close(s->display);
+  close(s->listener);
   free(s);
 }
 
@@ -104,29 +100,23 @@ void Server_AcceptClients(Server* s)
 {
   for (u32 i = 0; i < s->game.n_slots; i++)
   {
-    s->fh[i] = TCP_Accept(s->listener);
-    s->fd[i] = fileno(s->fh[i]);
+    s->client[i] = TCP_Accept(s->listener);
     s->game.n_clients++;
     
-    fwrite(&MAGIC_WORD,     1,            1, s->fh[i]);
-    fwrite(&VERSION_NUMBER, 1,            1, s->fh[i]);
-    fwrite(&s->game,        sizeof(Game), 1, s->fh[i]);
-    fflush(s->fh[i]);
+    write(s->client[i], &MAGIC_WORD,     sizeof(u8));
+    write(s->client[i], &VERSION_NUMBER, sizeof(u8));
+    write(s->client[i], &s->game,        sizeof(Game));
     for (u32 j = 0; j < i; j++)
-    {
-      fwrite(&s->game.n_clients, sizeof(u32), 1, s->fh[j]);
-      fflush(s->fh[j]);
-    }
+      write(s->client[j], &s->game.n_clients, sizeof(u32));
   }
 }
 
 bool Server_HandleOrder(Server* s, u32 id)
 {
-  
   u8 code;
-  if (fread(&code,  sizeof(u8),    1, s->fh[id]) <= 0) return false;
   float param;
-  if (fread(&param, sizeof(float), 1, s->fh[id]) <= 0) return false;
+  if (read(s->client[id], &code,  sizeof(u8))    <= 0) return false;
+  if (read(s->client[id], &param, sizeof(float)) <= 0) return false;
 
   switch (code)
   {
@@ -154,7 +144,6 @@ bool Server_HandleOrder(Server* s, u32 id)
     break;
   }
   
-  Server_Debug(s);
   return true;
 }
 
@@ -170,49 +159,46 @@ void Server_Tick(Server* s)
     }
 }
 
-void Server_Dump(Server* s, FILE* f)
+void Server_Dump(Server* s, s32 f)
 {
   assert(s);
-  fwrite(&s->game,      sizeof(Game),   1,                  f);
-  fwrite(&s->n_robots,  sizeof(u32),    1,                  f);
-  fwrite(s->robot,      sizeof(Robot),  s->game.n_clients,  f);
-//  fwrite(&s->n_bullets, sizeof(u32),    1,                  f);
-//  fwrite(s->bullet,     sizeof(Bullet), s->n_bullets,       f);
-  fflush(f);
+  write(f, &s->game,      sizeof(Game));
+  write(f, &s->n_robots,  sizeof(u32));
+  write(f, s->robot,      sizeof(Robot) * s->game.n_clients);
+//  write(f, &s->n_bullets, sizeof(u32));
+//  write(f, &s->bullet,    sizeof(Bullet) * s->game.n_bullets);
 }
 
 void Server_Loop(Server* s)
 {
+  assert(s);
+  
   int fd_max = 0;
   for (u32 i = 0; i < s->game.n_clients; i++)
-    if (s->fd[i] > fd_max)
-      fd_max = s->fd[i];
+    if (s->client[i] > fd_max)
+      fd_max = s->client[i];
   fd_max++;
   
   srandom(time(NULL));
   for (u32 i = 0; i < s->game.n_clients; i++)
   {
-    Robot r= { random() % (u32)s->game.width, random() % (u32)s->game.height, deg2rad(random() % 360), 0, 100.0, 0, 0, 0 };
+    Robot r = { random() % (u32)s->game.width, random() % (u32)s->game.height, deg2rad(random() % 360), 0, 100.0, 0, 0, 0 };
     s->robot[i] = r;
-    fwrite(&r, sizeof(Robot), 1, s->fh[i]);
-    fflush(s->fh[i]);
+    write(s->client[i], &r, sizeof(Robot));
   }
   for (u32 i = 0; i < s->game.n_clients; i++)
-  {
-    fwrite(&START_MESSAGE, 1, 1, s->fh[i]);
-    fflush(s->fh[i]);
-  }
+    write(s->client[i], &START_MESSAGE, sizeof(u8));
 
 
   int epollfd = epoll_create(s->game.n_clients);
   struct epoll_event  ev;
   for (u32 i = 0; i < s->game.n_clients; i++)
   {
-    int flags = fcntl (s->fd[i], F_GETFL, 0);
-    fcntl (s->fd[i], F_SETFL, flags | O_NONBLOCK);
+    int flags = fcntl(s->client[i], F_GETFL, 0);
+    fcntl(s->client[i], F_SETFL, flags | O_NONBLOCK);
     ev.events   = EPOLLIN;
     ev.data.u32 = i;
-    epoll_ctl(epollfd, EPOLL_CTL_ADD, s->fd[i], &ev);
+    epoll_ctl(epollfd, EPOLL_CTL_ADD, s->client[i], &ev);
   }
   
   struct epoll_event events[10];
@@ -226,5 +212,6 @@ void Server_Loop(Server* s)
     }
     Server_Tick(s);
     Server_Dump(s, s->display);
+    Server_Debug(s);
   }
 }

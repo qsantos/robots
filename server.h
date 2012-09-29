@@ -19,18 +19,15 @@
 #ifndef SERVER_H
 #define SERVER_C
 
-#include <stdio.h>
-
 #include "game.h"
 
 typedef struct
 {
   s32     listener;
-  FILE*   display;
-  FILE**  fh;
-  int*    fd;
+  s32     display;
+  s32*    client;
   
-  Game game;
+  Game    game;
   
   u32     n_robots;
   Robot*  robot;
@@ -46,7 +43,7 @@ void    Server_AcceptDisplay(Server*);
 void    Server_AcceptClients(Server*);
 bool    Server_HandleOrder  (Server*, u32);
 void    Server_Tick         (Server*);
-void    Server_Dump         (Server*, FILE*);
+void    Server_Dump         (Server*, s32);
 void    Server_Loop         (Server*);
 
 #endif

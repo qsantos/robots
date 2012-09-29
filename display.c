@@ -1,10 +1,8 @@
 #include "display.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 #include <GL/glfw.h>
 #include <SOIL/SOIL.h>
+#include <unistd.h>
 
 #include "socket.h"
 
@@ -69,7 +67,7 @@ Display* Display_New(string IP, u16 port)
   
   Display* ret = ALLOC(Display, 1);
   ret->server = TCP_Connect(IP, port);
-  if (!ret->server)
+  if (ret->server < 0)
   {
     fprintf(stderr, "Could not connect to the server\n");
     return NULL;
@@ -86,7 +84,7 @@ void Display_Delete(Display* d)
   assert(d);
 //  free(d->bullet);
   free(d->robot);
-  fclose(d->server);
+  close(d->server);
   free(d);
   glfwTerminate();
 }
@@ -95,17 +93,17 @@ void Display_Update(Display* d)
 {
   assert(d);
   
-  fread(&d->game, sizeof(Game), 1, d->server);
+  read(d->server, &d->game, sizeof(Game));
   
   u32 nn_robots;
-  fread(&nn_robots, sizeof(u32), 1, d->server);
+  read(d->server, &nn_robots, sizeof(u32));
   if (nn_robots > d->a_robots)
   {
     d->a_robots = nn_robots;
     d->robot = REALLOC(d->robot, Robot, d->a_robots);
   }
   d->n_robots = nn_robots;
-  fread(d->robot, sizeof(Robot), d->n_robots, d->server);
+  read(d->server, d->robot, sizeof(Robot) * d->n_robots);
   
   d->opened = glfwGetWindowParam(GLFW_OPENED);
 }

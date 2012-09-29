@@ -19,14 +19,12 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#include <stdio.h>
+typedef unsigned short int Port;
+typedef          long  int Socket;
 
-#include "common.h"
-
-FILE* TCP_Connect (const string, u16);
-s32   TCP_ListenTo(const string, u16);
-s32   TCP_Listen  (u16);
-FILE* TCP_Accept  (u32);
-void  TCP_Close   (u32);
+Socket TCP_Connect (const char*, Port);
+Socket TCP_ListenTo(const char*, Port);
+Socket TCP_Listen  (Port);
+Socket TCP_Accept  (Socket);
 
 #endif

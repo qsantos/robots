@@ -16,22 +16,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
 
 #include "socket.h"
 #include "game.h"
 
-FILE* server = NULL;
+s32 server = 0;
 #define ORDER(Name, CODE)                   \
 void Order_##Name(float speed)              \
 {                                           \
   static const u8 code = CODE;              \
-  fwrite(&code,  sizeof(u8),    1, server); \
-  fwrite(&speed, sizeof(float), 1, server); \
-  fflush(server);                           \
+  write(server, &code, sizeof(u8));         \
+  write(server, &speed, sizeof(float));     \
 }
 
 ORDER(Advance, ADVANCE)
@@ -72,26 +69,26 @@ int main(int argc, char** argv)
 
   printf("Connecting to %s:%lu\n", interface, port);
   server = TCP_Connect(interface, port);
-  if (!server)
+  if (server < 0)
   {
     fprintf(stderr, "Could not connect to the server\n");
     return 1;
   }
   
   u8 server_hello[2];
-  fread(&server_hello, 1, 2, server);
+  read(server, &server_hello, sizeof(u8) * 2);
   
   Game game;
-  fread(&game, sizeof(Game), 1, server);
+  read(server, &game, sizeof(Game));
   
   while (game.n_clients < game.n_slots)
-    fread(&game.n_clients, sizeof(u32), 1, server);
+    read(server, &game.n_clients, sizeof(u32));
   
   Robot r;
-  fread(&r, sizeof(Robot), 1, server);
+  read(server, &r, sizeof(Robot));
   
   u8 start;
-  fread(&start, 1, 1, server);
+  read(server, &start, sizeof(u8));
 
   Order_Advance( 1.0);
   Order_Turn   ( 0.1);
@@ -102,6 +99,6 @@ int main(int argc, char** argv)
     usleep(1000000 / FRAMERATE);
   }
 
-  fclose(server);
+  close(server);
   return 0;
 }

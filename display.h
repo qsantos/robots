@@ -23,7 +23,7 @@
 
 typedef struct
 {
-  FILE*   server;
+  s32     server;
   bool    opened;
 
   Game    game;

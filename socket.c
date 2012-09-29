@@ -20,17 +20,13 @@
 
 #include <string.h>
 #include <arpa/inet.h>
-#include <assert.h>
 #include <unistd.h>
 
-FILE* TCP_Connect(const string IP, u16 port)
+Socket TCP_Connect(const char* IP, Port port)
 {
-  s32 sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (sock < 0)
-  {
-    fprintf(stderr, "TCP: Could not make socket\n");
-    return NULL;
-  }
+    return -1;
 	
   struct sockaddr_in host;
   memset(&host, 0, sizeof(struct sockaddr_in));
@@ -38,32 +34,21 @@ FILE* TCP_Connect(const string IP, u16 port)
   host.sin_family = AF_INET;
   host.sin_port   = htons(port);
 	
-  s32 res = connect(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
+  Socket res = connect(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
   if (res < 0)
   {
     close(sock);
-    fprintf(stderr, "TCP: Could not connect\n");
-    return NULL;
+    return -1;
   }
 	
-  FILE* ret = fdopen(sock, "a+");
-  if (!ret)
-  {
-    close(sock);
-    fprintf(stderr, "TCP: Could not open as a file\n");
-    return NULL;
-  }
-  return ret;
+  return sock;
 }
 
-s32 TCP_ListenTo(const string IP, u16 port)
+Socket TCP_ListenTo(const char* IP, Port port)
 {
-  s32 sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (sock < 0)
-  {
-    fprintf(stderr, "TCP: Could not make socket\n");
-    assert(false);
-  }
+    return -1;
 	
   struct sockaddr_in host;
   memset(&host, 0, sizeof(struct sockaddr_in));
@@ -74,50 +59,33 @@ s32 TCP_ListenTo(const string IP, u16 port)
   int v = 1;
   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(int));
 	
-  s32 res = bind(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
+  Socket res = bind(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
   if (res < 0)
   {
     close(sock);
-    fprintf(stderr, "TCP: Could not bind port\n");
-    assert(false);
+    return -1;
   }
 	
   res = listen(sock, 10);
   if (res < 0)
   {
     close(sock);
-    assert(false);
+    return -1;
   }
 	
   return sock;
 }
 
-s32 TCP_Listen(u16 port)
+Socket TCP_Listen(Port port)
 {
   return TCP_ListenTo("0.0.0.0", port);
 }
 
-FILE* TCP_Accept(u32 sock)
+Socket TCP_Accept(Socket sock)
 {
-  s32 client = accept(sock, NULL, NULL);
+  Socket client = accept(sock, NULL, NULL);
   if (client < 0)
-  {
-    fprintf(stderr, "TCP: Could not accept client\n");
-    assert(false);
-    return NULL;
-  }
-  FILE* ret = fdopen(client, "a+");
-  if (!ret)
-  {
-    fprintf(stderr, "TCP: Could not open as a file\n");
-    close(client);
-    return NULL;
-  }
-  return ret;
-}
-
-void TCP_Close(u32 sock)
-{
-  shutdown(sock, SHUT_RDWR);
-  close(sock);
+    return -1;
+  
+  return client;
 }
