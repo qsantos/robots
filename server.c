@@ -42,7 +42,7 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
     return NULL;
   }
   
-  ret->client        = ALLOC(s32,   n_clients);
+  ret->client    = ALLOC(s32,   n_clients);
   ret->n_robots  = n_clients;
   ret->robot     = ALLOC(Robot, n_clients);
   
