@@ -26,6 +26,9 @@
 
 #include "socket.h"
 
+const u8 MAGIC_WORD     = 0x42;
+const u8 VERSION_NUMBER = 0x01;
+
 Server* Server_New(string interface, u16 port, u32 n_clients)
 {
   Server* ret = ALLOC(Server, 1);
@@ -102,6 +105,11 @@ void Server_AcceptClients(Server* s)
   {
     s->fh[i] = TCP_Accept(s->listener);
     s->fd[i] = fileno(s->fh[i]);
+    fwrite(&MAGIC_WORD,     1,            1, s->fh[i]);
+    fwrite(&VERSION_NUMBER, 1,            1, s->fh[i]);
+    fwrite(&s->game,        sizeof(Game), 1, s->fh[i]);
+    for (u32 j = 0; j < i; j++)
+      fwrite(&s->game.n_clients, sizeof(u32), 1, s->fh[j]);
   }
 }
 

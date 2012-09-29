@@ -1,6 +1,6 @@
 #!/bin/sh
 #IFS=$'\n'
-for i in $(ls *.h *.c | grep -v -e lexer.h -e lex.yy.c -e parser.h -e parser.tab.c)
+for i in $(ls *.h *.c)
 do
 	line=$(grep -Enm1 '^\\\*/' $i | awk -F: '{print $1;}')
 	cat header > tmp

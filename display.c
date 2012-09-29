@@ -36,7 +36,6 @@ Display* Display_New(string IP, u16 port)
     glfwTerminate();
     return NULL;
   }
-  
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   
   // two dimensionnal mode
@@ -44,8 +43,6 @@ Display* Display_New(string IP, u16 port)
   glLoadIdentity();
   glOrtho(0, winWidth, winHeight, 0, 0, 1);
   glMatrixMode(GL_MODELVIEW);
-  
-  // we won't need this either
   glDisable(GL_DEPTH_TEST);
   
   // enables transparency
