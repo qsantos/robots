@@ -4,3 +4,4 @@ git pull origin master
 git merge $1
 git push origin master
 git checkout $1
+git merge master
