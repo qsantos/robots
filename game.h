@@ -51,7 +51,6 @@ typedef struct PACKED
   float turnGunSpeed;
 } Robot;
 
-/*
 typedef struct PACKED
 {
   float x;
@@ -59,6 +58,5 @@ typedef struct PACKED
   float angle;
   float energy;
 } Bullet;
-*/
 
 #endif

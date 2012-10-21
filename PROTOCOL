@@ -114,11 +114,18 @@ Server > Robot (see Robot information)
 
 When a robot's data need to be sent, the following scheme is used:
 
-Server > x            (float)
-Server > y            (float)
-Server > angle        (float)
-Server > gunAngle     (float)
-Server > energy       (float)
-Server > velocity     (float)
-Server > turnSpeed    (float)
-Server > turnGunSpeed (float)
+> x            (float)
+> y            (float)
+> angle        (float)
+> gunAngle     (float)
+> energy       (float)
+> velocity     (float)
+> turnSpeed    (float)
+> turnGunSpeed (float)
+
+When a bullet's data need to be sent, the following scheme is used:
+
+> x      (float)
+> y      (float)
+> angle  (float)
+> energy (float)
