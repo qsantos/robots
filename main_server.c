@@ -25,7 +25,7 @@ int main(int argc, char** argv)
   char* interface = "127.0.0.1";
   u32   port      = 4242;
   u32   n_clients = 2;
-  
+
   opterr = 0;
   int c;
   while ((c = getopt(argc, argv, "i:n:p:")) != -1)
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     default:
       abort();
     }
-  
+
   Server* server = Server_New(interface, port, n_clients);
   assert(server);
 
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 
   printf("Starting simulation\n");
   Server_Loop(server);
-  
+
   Server_Delete(server);
   return 0;
 }

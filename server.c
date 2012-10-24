@@ -33,7 +33,7 @@ const u8 START_MESSAGE  = 0x42;
 Server* Server_New(string interface, u16 port, u32 n_clients)
 {
   Server* ret = ALLOC(Server, 1);
-  
+
   printf("Listening on %s:%u\n", interface, port);
   printf("Waiting for %lu clients\n", n_clients);
   ret->listener = TCP_ListenTo(interface, port);
@@ -42,24 +42,25 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
     fprintf(stderr, "The server could not bind the adequate port\n");
     return NULL;
   }
-  
+
   ret->client    = ALLOC(s32,   n_clients);
   ret->n_robots  = n_clients;
   ret->robot     = ALLOC(Robot, n_clients);
   ret->n_bullets = 0;
   ret->bullet    = NULL;
-  
+
   ret->game.width     = 1024;
   ret->game.height    = 768;
   ret->game.n_slots   = n_clients;
   ret->game.n_clients = 0;
-  
+
   return ret;
 }
 
 void Server_Delete(Server* s)
 {
   assert(s);
+
   free(s->bullet);
   free(s->robot);
   for (u32 i = 0; i < s->game.n_clients; i++)
@@ -73,6 +74,7 @@ void Server_Delete(Server* s)
 void Server_Debug(Server* s)
 {
   assert(s);
+
   printf("==================================\n");
   printf("Robots:\n");
   for (u32 i = 0; i < s->n_robots; i++)
@@ -92,6 +94,8 @@ void Server_Debug(Server* s)
 
 void Server_AcceptDisplay(Server* s)
 {
+  assert(s);
+
   s->display = TCP_Accept(s->listener);
 }
 
@@ -101,7 +105,7 @@ void Server_AcceptClients(Server* s)
   {
     s->client[i] = TCP_Accept(s->listener);
     s->game.n_clients++;
-    
+
     u8 hello[2];
     read(s->client[i],  hello,           sizeof(u8) * 2);
     write(s->client[i], &MAGIC_WORD,     sizeof(u8));
@@ -114,41 +118,46 @@ void Server_AcceptClients(Server* s)
 
 bool Server_HandleOrder(Server* s, u32 id)
 {
+  assert(s);
+
   Order order;
   if (read(s->client[id], &order,  sizeof(Order)) <= 0)
     return false;
 
+  Robot* r = &s->robot[id];
   switch (order.code)
   {
   case ADVANCE:
-    s->robot[id].velocity = order.param;
+    r->velocity = order.param;
     break;
 
   case TURN:
-    s->robot[id].turnSpeed = order.param;
+    r->turnSpeed = order.param;
     break;
 
   case TURNGUN:
-    s->robot[id].turnGunSpeed = order.param;
+    r->turnGunSpeed = order.param;
     break;
 
   case FIRE:
     s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets+1);
     Bullet* b = &s->bullet[s->n_bullets];
     s->n_bullets++;
-    
-    b->angle  = s->robot[id].angle + s->robot[id].gunAngle;
-    b->x      = s->robot[id].x + 100 * sin(b->angle);
-    b->y      = s->robot[id].y - 100 * cos(b->angle);
+
+    b->angle  = r->angle + r->gunAngle;
+    b->x      = r->x + 100 * sin(b->angle);
+    b->y      = r->y - 100 * cos(b->angle);
     b->energy = order.param;
     break;
   }
-  
+
   return true;
 }
 
 void Server_Tick(Server* s, float time)
 {
+  assert(s);
+
   for (u32 i = 0; i < s->n_robots; i++)
   {
     Robot* r = &s->robot[i];
@@ -175,23 +184,24 @@ void Server_Tick(Server* s, float time)
 void Server_Dump(Server* s, s32 f)
 {
   assert(s);
+
   write(f, &s->game,      sizeof(Game));
   write(f, &s->n_robots,  sizeof(u32));
   write(f, s->robot,      sizeof(Robot) * s->n_robots);
   write(f, &s->n_bullets, sizeof(u32));
-  write(f, s->bullet,    sizeof(Bullet) * s->n_bullets);
+  write(f, s->bullet,     sizeof(Bullet) * s->n_bullets);
 }
 
 void Server_Loop(Server* s)
 {
   assert(s);
-  
+
   int fd_max = 0;
   for (u32 i = 0; i < s->game.n_clients; i++)
     if (s->client[i] > fd_max)
       fd_max = s->client[i];
   fd_max++;
-  
+
   srandom(time(NULL));
   for (u32 i = 0; i < s->game.n_clients; i++)
   {
@@ -221,7 +231,7 @@ void Server_Loop(Server* s)
     ev.data.u32 = i;
     epoll_ctl(epollfd, EPOLL_CTL_ADD, s->client[i], &ev);
   }
-  
+
   struct timeb last;
   struct timeb cur;
   ftime(&cur);

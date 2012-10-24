@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     default:
       abort();
     }
-  
+
   Display* display = Display_New(interface, port);
 
   do
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     Display_Draw(display);
   }
   while (display->opened);
-  
+
   Display_Delete(display);
   return 0;
 }

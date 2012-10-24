@@ -11,27 +11,21 @@ LDFLAGS := -lm -lGL -lglfw -lSOIL
 all: client server display
 
 client: $(OFILES_CLIENT)
-	@echo " [LD] client"
-	@gcc $^ -o $@ $(LDFLAGS)
+	gcc $^ -o $@ $(LDFLAGS)
 
 server: $(OFILES_SERVER)
-	@echo " [LD] server"
-	@gcc $^ -o $@ $(LDFLAGS)
+	gcc $^ -o $@ $(LDFLAGS)
 
 display: $(OFILES_DISPLAY)
-	@echo " [LD] display"
-	@gcc $^ -o $@ $(LDFLAGS)
+	gcc $^ -o $@ $(LDFLAGS)
 
 %.o: %.c
-	@echo " [CC] $^"
-	@gcc $(CFLAGS) -c $< -o $@
+	gcc $(CFLAGS) -c $< -o $@
 
 clean:
-	@echo " [RM] $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)"
-	-@rm -f $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)
+	rm -f $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)
 
 destroy: clean
-	@echo " [RM] client server display"
-	-@rm -f client server display
+	rm -f client server display
 
 rebuild: destroy all

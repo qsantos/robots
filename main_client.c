@@ -78,29 +78,29 @@ int main(int argc, char** argv)
     fprintf(stderr, "Could not connect to the server\n");
     return 1;
   }
-  
+
   write(server, &MAGIC_WORD,     sizeof(u8));
   write(server, &VERSION_NUMBER, sizeof(u8));
-  
+
   u8 server_hello[2];
   read(server, &server_hello, sizeof(u8) * 2);
-  
+
   Game game;
   read(server, &game, sizeof(Game));
-  
+
   while (game.n_clients < game.n_slots)
     read(server, &game.n_clients, sizeof(u32));
-  
+
   Robot r;
   read(server, &r, sizeof(Robot));
-  
+
   u8 start;
   read(server, &start, sizeof(u8));
 
   Order_Advance( 50);
   Order_Turn   ( 30);
   Order_TurnGun(-90);
-    
+
   while (42)
   {
     usleep(1000000);
