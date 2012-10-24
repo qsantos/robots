@@ -133,14 +133,14 @@ bool Server_HandleOrder(Server* s, u32 id)
     break;
 
   case FIRE:
-    printf("Reallocating for %lu bullets\n", s->n_bullets+1);
     s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets+1);
-    printf("Done\n");
-    s->bullet[s->n_bullets].x      = s->robot[id].x;
-    s->bullet[s->n_bullets].y      = s->robot[id].y;
-    s->bullet[s->n_bullets].angle  = s->robot[id].angle + s->robot[id].gunAngle;
-    s->bullet[s->n_bullets].energy = order.param;
+    Bullet* b = &s->bullet[s->n_bullets];
     s->n_bullets++;
+    
+    b->angle  = s->robot[id].angle + s->robot[id].gunAngle;
+    b->x      = s->robot[id].x + 100 * sin(b->angle);
+    b->y      = s->robot[id].y - 100 * cos(b->angle);
+    b->energy = order.param;
     break;
   }
   
@@ -162,6 +162,13 @@ void Server_Tick(Server* s, float time)
     Bullet* b = &s->bullet[i];
     b->x += time * 100 * sin(b->angle);
     b->y -= time * 100 * cos(b->angle);
+    for (u32 i = 0; i < s->n_robots; i++)
+      if (RobotCollidePoint(&s->robot[i], b->x, b->y))
+      {
+        b->x = 0;
+        b->y = 0;
+        b->angle = 0;
+      }
   }
 }
 
