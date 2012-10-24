@@ -156,9 +156,9 @@ void Robot_Draw(Robot* r)
   glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
   Texture_Draw(TEX_CHASSIS, r->width, r->height);
   
-  glTranslatef(tex_width[TEX_CHASSIS]/2, 78, 0);
+  glTranslatef(0, 21, 0);
   glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
-//  glTranslatef(-tex_width[TEX_GUN]/2, -100, 0);
+  glTranslatef(0, -40, 0);
   Texture_Draw(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
 
   glPopMatrix();
