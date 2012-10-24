@@ -101,12 +101,10 @@ int main(int argc, char** argv)
   Order_Turn   ( 30);
   Order_TurnGun(-90);
     
-  usleep(2000000);
-  Order_Fire(10);
-  
   while (42)
   {
     usleep(1000000);
+    Order_Fire(10);
   }
 
   close(server);

@@ -53,8 +53,8 @@ static inline void* my_assert(void* ptr, const char* file, unsigned int line)
   return ptr;
 }
 
-#define ALLOC(t,n)       (t*) my_assert(malloc(sizeof(t) * n),       __FILE__, __LINE__)
-#define REALLOC(ptr,t,n) (t*) my_assert(realloc(ptr, sizeof(t) * n), __FILE__, __LINE__)
+#define ALLOC(t,n)       (t*) my_assert(malloc(sizeof(t) * (n)),       __FILE__, __LINE__)
+#define REALLOC(ptr,t,n) (t*) my_assert(realloc(ptr, sizeof(t) * (n)), __FILE__, __LINE__)
 
 /* DIRTY STUFF */
 

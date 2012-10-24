@@ -133,7 +133,9 @@ bool Server_HandleOrder(Server* s, u32 id)
     break;
 
   case FIRE:
+    printf("Reallocating for %lu bullets\n", s->n_bullets+1);
     s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets+1);
+    printf("Done\n");
     s->bullet[s->n_bullets].x      = s->robot[id].x;
     s->bullet[s->n_bullets].y      = s->robot[id].y;
     s->bullet[s->n_bullets].angle  = s->robot[id].angle + s->robot[id].gunAngle;

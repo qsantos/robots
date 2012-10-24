@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 {
   char* interface = "127.0.0.1";
   u32   port      = 4242;
-  u32   n_clients = 1;
+  u32   n_clients = 2;
   
   opterr = 0;
   int c;
