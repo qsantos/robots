@@ -116,6 +116,8 @@ When a robot's data need to be sent, the following scheme is used:
 
 > x            (float)
 > y            (float)
+> width        (float)
+> height       (float)
 > angle        (float)
 > gunAngle     (float)
 > energy       (float)

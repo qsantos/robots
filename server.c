@@ -182,7 +182,15 @@ void Server_Loop(Server* s)
   srandom(time(NULL));
   for (u32 i = 0; i < s->game.n_clients; i++)
   {
-    Robot r = { random() % (u32)s->game.width, random() % (u32)s->game.height, deg2rad(random() % 360), 0, 100.0, 0, 0, 0 };
+    Robot r =
+    {
+      random() % (u32)s->game.width,
+      random() % (u32)s->game.height,
+      0,
+      0,
+      deg2rad(random() % 360),
+      0, 100.0, 0, 0, 0
+    };
     s->robot[i] = r;
     write(s->client[i], &r, sizeof(Robot));
   }

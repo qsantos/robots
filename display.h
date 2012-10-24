@@ -39,6 +39,6 @@ void     Display_Delete(Display*);
 void     Display_Update(Display*);
 void     Display_Draw  (Display*);
 void     Robot_Draw    (Robot*);
-void     Texture_Draw  (u32);
+void     Texture_Draw  (u32, float, float);
 
 #endif

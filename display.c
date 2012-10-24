@@ -64,7 +64,6 @@ Display* Display_New(string IP, u16 port)
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height[i]);
   }
   
-  
   Display* ret = ALLOC(Display, 1);
   ret->server = TCP_Connect(IP, port);
   if (ret->server < 0)
@@ -156,28 +155,23 @@ void Robot_Draw(Robot* r)
   
   glTranslated(r->x, r->y, 0);
   glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
-  glTranslatef(-tex_width[TEX_CHASSIS]/2, -tex_height[TEX_CHASSIS]/2, 0);
-  Texture_Draw(TEX_CHASSIS);
+  Texture_Draw(TEX_CHASSIS, r->width, r->height);
   
   glTranslatef(tex_width[TEX_CHASSIS]/2, 78, 0);
   glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
-  glTranslatef(-tex_width[TEX_GUN]/2, -100, 0);
-  Texture_Draw(TEX_GUN);
+//  glTranslatef(-tex_width[TEX_GUN]/2, -100, 0);
+  Texture_Draw(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
 
   glPopMatrix();
 }
 
-void Texture_Draw(u32 tex)
+void Texture_Draw(u32 tex, float width, float height)
 {
   glBindTexture(GL_TEXTURE_2D, texture[tex]);
   glBegin(GL_QUADS);
-  glTexCoord2f(0.0,            1.0);
-  glVertex2f  (0,              0 );
-  glTexCoord2f(1.0,            1.0);
-  glVertex2f  (tex_width[tex], 0);
-  glTexCoord2f(1.0,            0.0);
-  glVertex2f  (tex_width[tex], tex_height[tex]);
-  glTexCoord2f(0.0,            0.0);
-  glVertex2f  (0,              tex_height[tex]);
+  glTexCoord2f(0.0, 1.0); glVertex2f(- width / 2, - height / 2);
+  glTexCoord2f(1.0, 1.0); glVertex2f(  width / 2, - height / 2);
+  glTexCoord2f(1.0, 0.0); glVertex2f(  width / 2,   height / 2);
+  glTexCoord2f(0.0, 0.0); glVertex2f(- width / 2,   height / 2);
   glEnd();
 }

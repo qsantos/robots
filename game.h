@@ -43,6 +43,8 @@ typedef struct PACKED
 {
   float x;
   float y;
+  float width;
+  float height;
   float angle;
   float gunAngle;
   float energy;
@@ -58,5 +60,8 @@ typedef struct PACKED
   float angle;
   float energy;
 } Bullet;
+
+bool RobotCollidePoint(Robot*, float, float);
+bool RobotCollideRobot(Robot*, Robot*);
 
 #endif
