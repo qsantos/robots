@@ -71,9 +71,12 @@ Display* Display_New(string IP, u16 port)
     fprintf(stderr, "Could not connect to the server\n");
     return NULL;
   }
-  ret->n_robots = 0;
-  ret->a_robots = 0;
-  ret->robot    = NULL;
+  ret->n_robots  = 0;
+  ret->a_robots  = 0;
+  ret->robot     = NULL;
+  ret->n_bullets = 0;
+  ret->a_bullets = 0;
+  ret->bullet    = NULL;
   
   return ret;
 }

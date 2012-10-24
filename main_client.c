@@ -97,13 +97,16 @@ int main(int argc, char** argv)
   u8 start;
   read(server, &start, sizeof(u8));
 
-  Order_Advance( 1.0);
-  Order_Turn   ( 0.1);
-  Order_TurnGun(-0.3);
+  Order_Advance( 50);
+  Order_Turn   ( 30);
+  Order_TurnGun(-90);
     
+  usleep(2000000);
+  Order_Fire(10);
+  
   while (42)
   {
-    usleep(1000000 / FRAMERATE);
+    usleep(1000000);
   }
 
   close(server);

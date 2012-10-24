@@ -20,6 +20,7 @@
 
 #include <time.h>
 #include <sys/epoll.h>
+#include <sys/timeb.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -144,21 +145,21 @@ bool Server_HandleOrder(Server* s, u32 id)
   return true;
 }
 
-void Server_Tick(Server* s)
+void Server_Tick(Server* s, float time)
 {
   for (u32 i = 0; i < s->n_robots; i++)
   {
     Robot* r = &s->robot[i];
-    r->x += r->velocity * sin(r->angle);
-    r->y -= r->velocity * cos(r->angle);
-    r->angle += deg2rad(r->turnSpeed);
-    r->gunAngle += deg2rad(r->turnGunSpeed);
+    r->x += time * r->velocity * sin(r->angle);
+    r->y -= time * r->velocity * cos(r->angle);
+    r->angle += deg2rad(time * r->turnSpeed);
+    r->gunAngle += deg2rad(time * r->turnGunSpeed);
   }
   for (u32 i = 0; i < s->n_bullets; i++)
   {
     Bullet* b = &s->bullet[i];
-    b->x += 100 * sin(b->angle);
-    b->y -= 100 * cos(b->angle);
+    b->x += time * 100 * sin(b->angle);
+    b->y -= time * 100 * cos(b->angle);
   }
 }
 
@@ -212,6 +213,9 @@ void Server_Loop(Server* s)
     epoll_ctl(epollfd, EPOLL_CTL_ADD, s->client[i], &ev);
   }
   
+  struct timeb last;
+  struct timeb cur;
+  ftime(&cur);
   struct epoll_event events[10];
   while (42)
   {
@@ -221,8 +225,12 @@ void Server_Loop(Server* s)
       u32 client = events[i].data.u32;
       while (Server_HandleOrder(s, client));
     }
-    Server_Tick(s);
+
+
+    last = cur;
+    ftime(&cur);
+    Server_Tick(s, (cur.time-last.time)+((float)(cur.millitm-last.millitm) / 1000));
     Server_Dump(s, s->display);
-//    Server_Debug(s);
+    Server_Debug(s);
   }
 }
