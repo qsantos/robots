@@ -2,11 +2,11 @@
 
 Whenever the server find it cool, it proceeds to dump game information to the display client with following order:
 
-Server > Game
-Server > n_robots  (uint32)
-Server > Robot     (n_robots items)
-#Server > n_bullets (uint32)
-#Server > Bullet    (n_bullet items)
+Server> Game
+Server> n_robots  (uint32)
+Server> Robot     (n_robots items)
+Server> n_bullets (uint32)
+Server> Bullet    (n_bullet items)
 
 
 
@@ -18,30 +18,30 @@ Server > Robot     (n_robots items)
 
 When the client connects, the server first send the magic word (0xXX) and the version of the protocol (0x01).
 
-Server > 0xXX 0x01
+Server> 0xXX 0x01
 
 It then proceed to send information about the game, in the following order:
 
-Server > height    (float)
-Server > width     (float)
-Server > n_slots   (uint32)
+Server> height    (float)
+Server> width     (float)
+Server> n_slots   (uint32)
 
-At this point, the server considers that the client is fully connected and waiting for a game. Every time the number of currently connected clients (n_clients) changes (including the client who just connected, the server sends n_clients to *every* connected client:
+At this point, the server considers that the client is fully connected and waiting for a game. Every time the number of currently connected clients (n_clients) changes (including the client who just connected), the server sends n_clients to *every* connected client:
 
-Server > n_clients (uint32)
+Server> n_clients (uint32)
 
 = Example =
 
 S wait for connections. A connects and gets:
 
-S>A: 0xXX 0x01 height width n_slots 1
+Server>A 0xXX 0x01 height width n_slots 1
 
 For there are currently one connected client (A). Then, B too connects to S and the servers sends:
 
-S>B 0xXX 0x01 height width n_slots 2
-S>A 2
+Server>B 0xXX 0x01 height width n_slots 2
+Server>A 2
 
-In other worlds, the server send the new number of currently connected clients to both A and B.
+In other words, the server send the new number of currently connected clients to both A and B.
 
 
 
