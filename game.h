@@ -29,7 +29,13 @@ typedef enum
   TURN    = 2,
   TURNGUN = 3,
   FIRE    = 4,
-} Command_Type;
+} OrderCode;
+
+typedef struct PACKED
+{
+  OrderCode code;
+  float     param;
+} Order;
 
 typedef struct PACKED
 {

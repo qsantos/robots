@@ -30,8 +30,9 @@ typedef struct
   u32     n_robots;
   u32     a_robots;
   Robot*  robot;
-//  u32     n_bullets;
-//  Bullet* bullet:
+  u32     n_bullets;
+  u32     a_bullets;
+  Bullet* bullet;
 } Display;
 
 Display* Display_New   (string, u16);
@@ -39,6 +40,7 @@ void     Display_Delete(Display*);
 void     Display_Update(Display*);
 void     Display_Draw  (Display*);
 void     Robot_Draw    (Robot*);
+void     Bullet_Draw   (Bullet*);
 void     Texture_Draw  (u32, float, float);
 
 #endif

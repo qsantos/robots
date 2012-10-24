@@ -32,8 +32,8 @@ typedef struct
   u32     n_robots;
   Robot*  robot;
   
-//  u32     n_bullets;
-//  Bullet* bullet;
+  u32     n_bullets;
+  Bullet* bullet;
 } Server;
 
 Server* Server_New          (string, u16, u32);

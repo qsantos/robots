@@ -22,13 +22,17 @@
 #include "socket.h"
 #include "game.h"
 
+const u8 MAGIC_WORD     = 0x42;
+const u8 VERSION_NUMBER = 0x01;
+const u8 START_MESSAGE  = 0x42;
+
 s32 server = 0;
 #define ORDER(Name, CODE)                   \
-void Order_##Name(float speed)              \
+void Order_##Name(float param)              \
 {                                           \
-  static const u8 code = CODE;              \
-  write(server, &code, sizeof(u8));         \
-  write(server, &speed, sizeof(float));     \
+  static Order order = { CODE, 0 };         \
+  order.param = param;                      \
+  write(server, &order, sizeof(Order));     \
 }
 
 ORDER(Advance, ADVANCE)
@@ -74,6 +78,9 @@ int main(int argc, char** argv)
     fprintf(stderr, "Could not connect to the server\n");
     return 1;
   }
+  
+  write(server, &MAGIC_WORD,     sizeof(u8));
+  write(server, &VERSION_NUMBER, sizeof(u8));
   
   u8 server_hello[2];
   read(server, &server_hello, sizeof(u8) * 2);

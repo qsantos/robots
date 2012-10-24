@@ -81,7 +81,7 @@ Display* Display_New(string IP, u16 port)
 void Display_Delete(Display* d)
 {
   assert(d);
-//  free(d->bullet);
+  free(d->bullet);
   free(d->robot);
   close(d->server);
   free(d);
@@ -103,6 +103,16 @@ void Display_Update(Display* d)
   }
   d->n_robots = nn_robots;
   read(d->server, d->robot, sizeof(Robot) * d->n_robots);
+  
+  u32 nn_bullets;
+  read(d->server, &nn_bullets, sizeof(u32));
+  if (nn_bullets > d->a_bullets)
+  {
+    d->a_bullets = nn_bullets;
+    d->bullet = REALLOC(d->bullet, Bullet, d->a_bullets);
+  }
+  d->n_bullets = nn_bullets;
+  read(d->server, d->bullet, sizeof(Bullet) * d->n_bullets);
   
   d->opened = glfwGetWindowParam(GLFW_OPENED);
 }
@@ -143,6 +153,9 @@ void Display_Draw(Display* d)
 
   for (u32 i = 0; i < d->n_robots; i++)
     Robot_Draw(&d->robot[i]);
+
+  for (u32 i = 0; i < d->n_bullets; i++)
+    Bullet_Draw(&d->bullet[i]);
   
   glfwSwapBuffers();
 }
@@ -163,6 +176,15 @@ void Robot_Draw(Robot* r)
   Texture_Draw(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
 
   glPopMatrix();
+}
+
+void Bullet_Draw(Bullet* b)
+{
+  assert(b);
+  
+  glBegin(GL_POINTS);
+    glVertex2f(b->x, b->y);
+  glEnd();
 }
 
 void Texture_Draw(u32 tex, float width, float height)

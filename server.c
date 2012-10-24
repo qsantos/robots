@@ -45,13 +45,13 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
   ret->client    = ALLOC(s32,   n_clients);
   ret->n_robots  = n_clients;
   ret->robot     = ALLOC(Robot, n_clients);
+  ret->n_bullets = 0;
+  ret->bullet    = NULL;
   
   ret->game.width     = 1024;
   ret->game.height    = 768;
   ret->game.n_slots   = n_clients;
   ret->game.n_clients = 0;
-//  ret->n_bullets = 0;
-//  ret->bullet    = NULL;
   
   return ret;
 }
@@ -59,7 +59,7 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 void Server_Delete(Server* s)
 {
   assert(s);
-//  free(s->bullet);
+  free(s->bullet);
   free(s->robot);
   for (u32 i = 0; i < s->game.n_clients; i++)
     close(s->client[i]);
@@ -77,18 +77,16 @@ void Server_Debug(Server* s)
   for (u32 i = 0; i < s->n_robots; i++)
   {
     Robot r = s->robot[i];
-    printf("#%lu: (%f, %f) %f° %f° %f%%\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
+    printf("#%lu: (%f, %f) %f° %f° %f\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
   }
   printf("\n");
-/*
   printf("Bullets:\n");
   for (u32 i = 0; i < s->n_bullets; i++)
   {
     Bullet b = s->bullet[i];
-    printf("#%lu: (%f, %f), %f°, %f%%\n", i, b.x, b.y, b.angle, b.energy);
+    printf("#%lu: (%f, %f), %f°, %f\n", i, b.x, b.y, b.angle, b.energy);
   }
   printf("\n");
-*/
 }
 
 void Server_AcceptDisplay(Server* s)
@@ -103,6 +101,8 @@ void Server_AcceptClients(Server* s)
     s->client[i] = TCP_Accept(s->listener);
     s->game.n_clients++;
     
+    u8 hello[2];
+    read(s->client[i],  hello,           sizeof(u8) * 2);
     write(s->client[i], &MAGIC_WORD,     sizeof(u8));
     write(s->client[i], &VERSION_NUMBER, sizeof(u8));
     write(s->client[i], &s->game,        sizeof(Game));
@@ -113,34 +113,31 @@ void Server_AcceptClients(Server* s)
 
 bool Server_HandleOrder(Server* s, u32 id)
 {
-  u8 code;
-  float param;
-  if (read(s->client[id], &code,  sizeof(u8))    <= 0) return false;
-  if (read(s->client[id], &param, sizeof(float)) <= 0) return false;
+  Order order;
+  if (read(s->client[id], &order,  sizeof(Order)) <= 0)
+    return false;
 
-  switch (code)
+  switch (order.code)
   {
   case ADVANCE:
-    s->robot[id].velocity = param;
+    s->robot[id].velocity = order.param;
     break;
 
   case TURN:
-    s->robot[id].turnSpeed = param;
+    s->robot[id].turnSpeed = order.param;
     break;
 
   case TURNGUN:
-    s->robot[id].turnGunSpeed = param;
+    s->robot[id].turnGunSpeed = order.param;
     break;
 
   case FIRE:
-/*
     s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets+1);
-    s->bullet[s->n_bullets].x  = s->robot[id].x;
-    s->bullet[s->n_bullets].y  = s->robot[id].y;
-    s->bullet[s->n_bullets].angle = s->robot[id].angle + s->robot[id].gunAngle;
-    s->bullet[s->n_bullets].energy = param;
+    s->bullet[s->n_bullets].x      = s->robot[id].x;
+    s->bullet[s->n_bullets].y      = s->robot[id].y;
+    s->bullet[s->n_bullets].angle  = s->robot[id].angle + s->robot[id].gunAngle;
+    s->bullet[s->n_bullets].energy = order.param;
     s->n_bullets++;
-*/
     break;
   }
   
@@ -149,14 +146,20 @@ bool Server_HandleOrder(Server* s, u32 id)
 
 void Server_Tick(Server* s)
 {
-    for (u32 i = 0; i < s->n_robots; i++)
-    {
-      Robot* r = &s->robot[i];
-      r->x += r->velocity* sin(r->angle);
-      r->y -= r->velocity * cos(r->angle);
-      r->angle += deg2rad(r->turnSpeed);
-      r->gunAngle += deg2rad(r->turnGunSpeed);
-    }
+  for (u32 i = 0; i < s->n_robots; i++)
+  {
+    Robot* r = &s->robot[i];
+    r->x += r->velocity * sin(r->angle);
+    r->y -= r->velocity * cos(r->angle);
+    r->angle += deg2rad(r->turnSpeed);
+    r->gunAngle += deg2rad(r->turnGunSpeed);
+  }
+  for (u32 i = 0; i < s->n_bullets; i++)
+  {
+    Bullet* b = &s->bullet[i];
+    b->x += 100 * sin(b->angle);
+    b->y -= 100 * cos(b->angle);
+  }
 }
 
 void Server_Dump(Server* s, s32 f)
@@ -164,9 +167,9 @@ void Server_Dump(Server* s, s32 f)
   assert(s);
   write(f, &s->game,      sizeof(Game));
   write(f, &s->n_robots,  sizeof(u32));
-  write(f, s->robot,      sizeof(Robot) * s->game.n_clients);
-//  write(f, &s->n_bullets, sizeof(u32));
-//  write(f, &s->bullet,    sizeof(Bullet) * s->game.n_bullets);
+  write(f, s->robot,      sizeof(Robot) * s->n_robots);
+  write(f, &s->n_bullets, sizeof(u32));
+  write(f, &s->bullet,    sizeof(Bullet) * s->n_bullets);
 }
 
 void Server_Loop(Server* s)
@@ -186,8 +189,8 @@ void Server_Loop(Server* s)
     {
       random() % (u32)s->game.width,
       random() % (u32)s->game.height,
-      0,
-      0,
+      73,
+      116,
       deg2rad(random() % 360),
       0, 100.0, 0, 0, 0
     };
@@ -220,6 +223,6 @@ void Server_Loop(Server* s)
     }
     Server_Tick(s);
     Server_Dump(s, s->display);
-    Server_Debug(s);
+//    Server_Debug(s);
   }
 }
