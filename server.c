@@ -170,7 +170,7 @@ void Server_Dump(Server* s, s32 f)
   write(f, &s->n_robots,  sizeof(u32));
   write(f, s->robot,      sizeof(Robot) * s->n_robots);
   write(f, &s->n_bullets, sizeof(u32));
-  write(f, &s->bullet,    sizeof(Bullet) * s->n_bullets);
+  write(f, s->bullet,    sizeof(Bullet) * s->n_bullets);
 }
 
 void Server_Loop(Server* s)

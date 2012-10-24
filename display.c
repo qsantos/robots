@@ -42,6 +42,8 @@ Display* Display_New(string IP, u16 port)
   glMatrixMode(GL_MODELVIEW);
   glDisable(GL_DEPTH_TEST);
   
+  glPointSize(3);
+  
   // enables transparency
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -133,26 +135,7 @@ void Display_Draw(Display* d)
   float zoom = pow(1.1, glfwGetMouseWheel());
   glScalef(zoom, zoom, zoom);
 
-  /* Display background */
-  glBindTexture(GL_TEXTURE_2D, texture[TEX_GROUND]);
-
-  int width  = d->game.width;
-  int height = d->game.height;
-  glBegin(GL_QUADS);
-
-    glTexCoord2f(0.0,       1.0       );
-    glVertex2f  (0,         0         );
-
-    glTexCoord2f(1.0,       1.0       );
-    glVertex2f  (width - 1, 0         );
-
-    glTexCoord2f(1.0,       0.0       );
-    glVertex2f  (width - 1, height - 1);
-
-    glTexCoord2f(0.0,       0.0       );
-
-    glVertex2f  (0,         height - 1);
-  glEnd();
+//  Texture_Draw(TEX_GROUND, d->game.width, d->game.height);
 
   for (u32 i = 0; i < d->n_robots; i++)
     Robot_Draw(&d->robot[i]);
@@ -185,6 +168,7 @@ void Bullet_Draw(Bullet* b)
 {
   assert(b);
   
+  glColor4f(1, 1, 1, 1);
   glBegin(GL_POINTS);
     glVertex2f(b->x, b->y);
   glEnd();
@@ -199,4 +183,5 @@ void Texture_Draw(u32 tex, float width, float height)
   glTexCoord2f(1.0, 0.0); glVertex2f(  width / 2,   height / 2);
   glTexCoord2f(0.0, 0.0); glVertex2f(- width / 2,   height / 2);
   glEnd();
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
