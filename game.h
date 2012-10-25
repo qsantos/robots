@@ -25,46 +25,46 @@
 
 typedef enum
 {
-  ADVANCE = 1,
-  TURN    = 2,
-  TURNGUN = 3,
-  FIRE    = 4,
+	ADVANCE = 1,
+	TURN    = 2,
+	TURNGUN = 3,
+	FIRE    = 4,
 } OrderCode;
 
 typedef struct PACKED
 {
-  OrderCode code;
-  float     param;
+	OrderCode code;
+	float     param;
 } Order;
 
 typedef struct PACKED
 {
-  float height;
-  float width;
-  u32   n_slots;
-  u32   n_clients;
+	float height;
+	float width;
+	u32   n_slots;
+	u32   n_clients;
 } Game;
 
 typedef struct PACKED
 {
-  float x;
-  float y;
-  float width;
-  float height;
-  float angle;
-  float gunAngle;
-  float energy;
-  float velocity;
-  float turnSpeed;
-  float turnGunSpeed;
+	float x;
+	float y;
+	float width;
+	float height;
+	float angle;
+	float gunAngle;
+	float energy;
+	float velocity;
+	float turnSpeed;
+	float turnGunSpeed;
 } Robot;
 
 typedef struct PACKED
 {
-  float x;
-  float y;
-  float angle;
-  float energy;
+	float x;
+	float y;
+	float angle;
+	float energy;
 } Bullet;
 
 bool RobotCollidePoint(Robot*, float, float);

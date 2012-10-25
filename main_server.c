@@ -22,49 +22,49 @@
 
 int main(int argc, char** argv)
 {
-  char* interface = "127.0.0.1";
-  u32   port      = 4242;
-  u32   n_clients = 2;
+	char* interface = "127.0.0.1";
+	u32   port      = 4242;
+	u32   n_clients = 2;
 
-  opterr = 0;
-  int c;
-  while ((c = getopt(argc, argv, "i:n:p:")) != -1)
-    switch (c)
-    {
-    case 'i':
-      interface = optarg;
-      break;
+	opterr = 0;
+	int c;
+	while ((c = getopt(argc, argv, "i:n:p:")) != -1)
+		switch (c)
+		{
+		case 'i':
+			interface = optarg;
+			break;
 
-    case 'n':
-      n_clients = (u32) atoi(optarg);
-      break;
+		case 'n':
+			n_clients = (u32) atoi(optarg);
+			break;
 
-    case 'p':
-      port = (u32) atoi(optarg);
-      break;
+		case 'p':
+			port = (u32) atoi(optarg);
+			break;
 
-    case '?':
-      if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
-	fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-      else if (isprint(optopt))
-	fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-      else
-	fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-      return 1;
+		case '?':
+			if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
+				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+			else if (isprint(optopt))
+				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+			else
+				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+			return 1;
 
-    default:
-      abort();
-    }
+		default:
+			abort();
+		}
 
-  Server* server = Server_New(interface, port, n_clients);
-  assert(server);
+	Server* server = Server_New(interface, port, n_clients);
+	assert(server);
 
-  Server_AcceptDisplay(server);
-  Server_AcceptClients(server);
+	Server_AcceptDisplay(server);
+	Server_AcceptClients(server);
 
-  printf("Starting simulation\n");
-  Server_Loop(server);
+	printf("Starting simulation\n");
+	Server_Loop(server);
 
-  Server_Delete(server);
-  return 0;
+	Server_Delete(server);
+	return 0;
 }

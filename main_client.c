@@ -30,9 +30,9 @@ s32 server = 0;
 #define ORDER(Name, CODE)                   \
 void Order_##Name(float param)              \
 {                                           \
-  static Order order = { CODE, 0 };         \
-  order.param = param;                      \
-  write(server, &order, sizeof(Order));     \
+	static Order order = { CODE, 0 };         \
+	order.param = param;                      \
+	write(server, &order, sizeof(Order));     \
 }
 
 ORDER(Advance, ADVANCE)
@@ -42,71 +42,71 @@ ORDER(Fire,    FIRE   )
 
 int main(int argc, char** argv)
 {
-  char* interface = "127.0.0.1";
-  u32   port      = 4242;
+	char* interface = "127.0.0.1";
+	u32   port      = 4242;
 
-  opterr = 0;
-  int c;
-  while ((c = getopt(argc, argv, "i:p:")) != -1)
-    switch (c)
-    {
-    case 'i':
-      interface = optarg;
-      break;
+	opterr = 0;
+	int c;
+	while ((c = getopt(argc, argv, "i:p:")) != -1)
+		switch (c)
+		{
+		case 'i':
+			interface = optarg;
+			break;
 
-    case 'p':
-      port = (u32) atoi(optarg);
-      break;
+		case 'p':
+			port = (u32) atoi(optarg);
+			break;
 
-    case '?':
-      if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
-	fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-      else if (isprint(optopt))
-	fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-      else
-	fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-      return 1;
+		case '?':
+			if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
+				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+			else if (isprint(optopt))
+				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+			else
+				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
+			return 1;
 
-    default:
-      abort();
-    }
+		default:
+			abort();
+		}
 
-  printf("Connecting to %s:%lu\n", interface, port);
-  server = TCP_Connect(interface, port);
-  if (server < 0)
-  {
-    fprintf(stderr, "Could not connect to the server\n");
-    return 1;
-  }
+	printf("Connecting to %s:%lu\n", interface, port);
+	server = TCP_Connect(interface, port);
+	if (server < 0)
+	{
+		fprintf(stderr, "Could not connect to the server\n");
+		return 1;
+	}
 
-  write(server, &MAGIC_WORD,     sizeof(u8));
-  write(server, &VERSION_NUMBER, sizeof(u8));
+	write(server, &MAGIC_WORD,     sizeof(u8));
+	write(server, &VERSION_NUMBER, sizeof(u8));
 
-  u8 server_hello[2];
-  read(server, &server_hello, sizeof(u8) * 2);
+	u8 server_hello[2];
+	read(server, &server_hello, sizeof(u8) * 2);
 
-  Game game;
-  read(server, &game, sizeof(Game));
+	Game game;
+	read(server, &game, sizeof(Game));
 
-  while (game.n_clients < game.n_slots)
-    read(server, &game.n_clients, sizeof(u32));
+	while (game.n_clients < game.n_slots)
+		read(server, &game.n_clients, sizeof(u32));
 
-  Robot r;
-  read(server, &r, sizeof(Robot));
+	Robot r;
+	read(server, &r, sizeof(Robot));
 
-  u8 start;
-  read(server, &start, sizeof(u8));
+	u8 start;
+	read(server, &start, sizeof(u8));
 
-  Order_Advance( 50);
-  Order_Turn   ( 30);
-  Order_TurnGun(-90);
+	Order_Advance( 50);
+	Order_Turn   ( 30);
+	Order_TurnGun(-90);
 
-  while (42)
-  {
-    usleep(1000000);
-    Order_Fire(10);
-  }
+	while (42)
+	{
+		usleep(1000000);
+		Order_Fire(10);
+	}
 
-  close(server);
-  return 0;
+	close(server);
+	return 0;
 }

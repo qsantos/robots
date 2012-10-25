@@ -45,12 +45,12 @@ typedef u8 bool;
 
 static inline void* my_assert(void* ptr, const char* file, unsigned int line)
 {
-  if (!ptr)
-  {
-    fprintf(stderr, "alloc failed, file %s, line %u\n", file, line);
-    abort();
-  }
-  return ptr;
+	if (!ptr)
+	{
+		fprintf(stderr, "alloc failed, file %s, line %u\n", file, line);
+		abort();
+	}
+	return ptr;
 }
 
 #define ALLOC(t,n)       (t*) my_assert(malloc(sizeof(t) * (n)),       __FILE__, __LINE__)
@@ -63,11 +63,11 @@ static inline void* my_assert(void* ptr, const char* file, unsigned int line)
 #define PI (3.14159265358979323846)
 static inline float deg2rad(float t)
 {
-  return fmod(t, 360) * PI / 180.0;
+	return fmod(t, 360) * PI / 180.0;
 }
 static inline float rad2deg(float t)
 {
-  return fmod(t, 2*PI) * 180.0 / PI;
+	return fmod(t, 2*PI) * 180.0 / PI;
 }
 
 #endif

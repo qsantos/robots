@@ -20,35 +20,35 @@
 
 inline static float dot(float x0, float y0, float x1, float y1)
 {
-  return x0*x1 + y0*y1;
+	return x0*x1 + y0*y1;
 }
 bool RobotCollidePoint(Robot* r, float x, float y)
 {
-  assert(r);
+	assert(r);
 
-  float vx = x - r->x;
-  float vy = y - r->y;
-  float wx =   r->width  / 2 * cos(r->angle);
-  float wy =   r->width  / 2 * sin(r->angle);
-  float hx = - r->height / 2 * sin(r->angle);
-  float hy =   r->height / 2 * cos(r->angle);
-  bool a = fabs(dot(vx, vy, wx, wy)) <= dot(wx, wy, wx, wy);
-  bool b = fabs(dot(vx, vy, hx, hy)) <= dot(hx, hy, hx, hy);
-  return a && b;
+	float vx = x - r->x;
+	float vy = y - r->y;
+	float wx =   r->width  / 2 * cos(r->angle);
+	float wy =   r->width  / 2 * sin(r->angle);
+	float hx = - r->height / 2 * sin(r->angle);
+	float hy =   r->height / 2 * cos(r->angle);
+	bool a = fabs(dot(vx, vy, wx, wy)) <= dot(wx, wy, wx, wy);
+	bool b = fabs(dot(vx, vy, hx, hy)) <= dot(hx, hy, hx, hy);
+	return a && b;
 }
 
 bool RobotCollideRobot(Robot* a, Robot* b)
 {
-  assert(a);
-  assert(b);
+	assert(a);
+	assert(b);
 
-  float wx =   b->width  / 2 * cos(b->angle);
-  float wy =   b->width  / 2 * sin(b->angle);
-  float hx = - b->height / 2 * sin(b->angle);
-  float hy =   b->height / 2 * cos(b->angle);
-  bool tl = RobotCollidePoint(a, b->x - wx - hx, b->y - wy - hy);
-  bool tr = RobotCollidePoint(a, b->x + wx - hx, b->y + wy - hy);
-  bool bl = RobotCollidePoint(a, b->x - wx + hx, b->y - wy + hy);
-  bool br = RobotCollidePoint(a, b->x + wx + hx, b->y + wy + hy);
-  return tl && tr && bl && br;
+	float wx =   b->width  / 2 * cos(b->angle);
+	float wy =   b->width  / 2 * sin(b->angle);
+	float hx = - b->height / 2 * sin(b->angle);
+	float hy =   b->height / 2 * cos(b->angle);
+	bool tl = RobotCollidePoint(a, b->x - wx - hx, b->y - wy - hy);
+	bool tr = RobotCollidePoint(a, b->x + wx - hx, b->y + wy - hy);
+	bool bl = RobotCollidePoint(a, b->x - wx + hx, b->y - wy + hy);
+	bool br = RobotCollidePoint(a, b->x + wx + hx, b->y + wy + hy);
+	return tl && tr && bl && br;
 }

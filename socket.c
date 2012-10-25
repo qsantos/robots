@@ -24,68 +24,68 @@
 
 Socket TCP_Connect(const char* IP, Port port)
 {
-  Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (sock < 0)
-    return -1;
+	Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock < 0)
+		return -1;
 
-  struct sockaddr_in host;
-  memset(&host, 0, sizeof(struct sockaddr_in));
-  inet_pton(AF_INET, IP, &host.sin_addr);
-  host.sin_family = AF_INET;
-  host.sin_port   = htons(port);
+	struct sockaddr_in host;
+	memset(&host, 0, sizeof(struct sockaddr_in));
+	inet_pton(AF_INET, IP, &host.sin_addr);
+	host.sin_family = AF_INET;
+	host.sin_port   = htons(port);
 
-  Socket res = connect(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
-  if (res < 0)
-  {
-    close(sock);
-    return -1;
-  }
+	Socket res = connect(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
+	if (res < 0)
+	{
+		close(sock);
+		return -1;
+	}
 
-  return sock;
+	return sock;
 }
 
 Socket TCP_ListenTo(const char* IP, Port port)
 {
-  Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (sock < 0)
-    return -1;
+	Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock < 0)
+		return -1;
 
-  struct sockaddr_in host;
-  memset(&host, 0, sizeof(struct sockaddr_in));
-  inet_pton(AF_INET, IP, &host.sin_addr);
-  host.sin_family = AF_INET;
-  host.sin_port   = htons(port);
+	struct sockaddr_in host;
+	memset(&host, 0, sizeof(struct sockaddr_in));
+	inet_pton(AF_INET, IP, &host.sin_addr);
+	host.sin_family = AF_INET;
+	host.sin_port   = htons(port);
 
-  int v = 1;
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(int));
+	int v = 1;
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(int));
 
-  Socket res = bind(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
-  if (res < 0)
-  {
-    close(sock);
-    return -1;
-  }
+	Socket res = bind(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
+	if (res < 0)
+	{
+		close(sock);
+		return -1;
+	}
 
-  res = listen(sock, 10);
-  if (res < 0)
-  {
-    close(sock);
-    return -1;
-  }
+	res = listen(sock, 10);
+	if (res < 0)
+	{
+		close(sock);
+		return -1;
+	}
 
-  return sock;
+	return sock;
 }
 
 Socket TCP_Listen(Port port)
 {
-  return TCP_ListenTo("0.0.0.0", port);
+	return TCP_ListenTo("0.0.0.0", port);
 }
 
 Socket TCP_Accept(Socket sock)
 {
-  Socket client = accept(sock, NULL, NULL);
-  if (client < 0)
-    return -1;
+	Socket client = accept(sock, NULL, NULL);
+	if (client < 0)
+		return -1;
 
-  return client;
+	return client;
 }

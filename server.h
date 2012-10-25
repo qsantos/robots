@@ -23,17 +23,17 @@
 
 typedef struct
 {
-  s32     listener;
-  s32     display;
-  s32*    client;
+	s32     listener;
+	s32     display;
+	s32*    client;
 
-  Game    game;
+	Game    game;
 
-  u32     n_robots;
-  Robot*  robot;
+	u32     n_robots;
+	Robot*  robot;
 
-  u32     n_bullets;
-  Bullet* bullet;
+	u32     n_bullets;
+	Bullet* bullet;
 } Server;
 
 Server* Server_New          (string, u16, u32);
