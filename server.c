@@ -173,12 +173,13 @@ void Server_Tick(Server* s, float time)
 		b->x += time * 100 * sin(b->angle);
 		b->y -= time * 100 * cos(b->angle);
 		for (u32 i = 0; i < s->n_robots; i++)
-		if (RobotCollidePoint(&s->robot[i], b->x, b->y))
-		{
-		b->x = 0;
-		b->y = 0;
-		b->angle = 0;
-		}
+			if (RobotCollidePoint(&s->robot[i], b->x, b->y))
+			{
+				s->robot[i].energy -= b->energy;
+				b->x = 0;
+				b->y = 0;
+				b->angle = 0;
+			}
 	}
 }
 
