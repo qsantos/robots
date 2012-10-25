@@ -103,7 +103,7 @@ void cb_displayFunc()
 {
   glClear(GL_COLOR_BUFFER_BIT);
   glPushMatrix();
-//  glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
+  glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
 
   glTranslatef(winWidth / 2 - mouseX, winHeight / 2 - mouseY, 0);
   glScalef(zoom, zoom, zoom);
