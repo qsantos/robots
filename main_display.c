@@ -17,8 +17,198 @@
 \*/
 
 #include <ctype.h>
+#include <GL/freeglut.h>
+#include <fcntl.h>
+#include <SOIL/SOIL.h>
+#include <unistd.h>
 
-#include "display.h"
+#include "socket.h"
+#include "game.h"
+
+#define GLUT_KEY_ESC    (27)
+#define GLUT_WHEEL_UP   (3)
+#define GLUT_WHEEL_DOWN (4)
+
+// texture information
+enum
+{
+  TEX_GROUND,
+  TEX_CHASSIS,
+  TEX_GUN,
+  TEX_NB
+};
+const char* tex_name  [TEX_NB] = { "img/grass.png", "img/chassis.png", "img/gun.png" };
+int         texture   [TEX_NB];
+int         tex_width [TEX_NB];
+int         tex_height[TEX_NB];
+
+int winId;
+int winWidth  = 1024;
+int winHeight = 768;
+int mouseX    = 0;
+int mouseY    = 0;
+float zoom    = 1;
+
+s32     server;
+
+Game    game;
+u32     n_robots  = 0;
+u32     a_robots  = 0;
+Robot*  robot     = NULL;
+u32     n_bullets = 0;
+u32     a_bullets = 0;
+Bullet* bullet    = NULL;
+
+void drawTexture(u32 tex, float width, float height)
+{
+  glBindTexture(GL_TEXTURE_2D, texture[tex]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0.0, 1.0); glVertex2f(- width / 2, - height / 2);
+  glTexCoord2f(1.0, 1.0); glVertex2f(  width / 2, - height / 2);
+  glTexCoord2f(1.0, 0.0); glVertex2f(  width / 2,   height / 2);
+  glTexCoord2f(0.0, 0.0); glVertex2f(- width / 2,   height / 2);
+  glEnd();
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void drawRobot(Robot* r)
+{
+  assert(r);
+
+  glPushMatrix();
+
+  glTranslated(r->x, r->y, 0);
+  glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
+  drawTexture(TEX_CHASSIS, r->width, r->height);
+
+  glTranslatef(0, 21, 0);
+  glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
+  glTranslatef(0, -40, 0);
+  drawTexture(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
+
+  glPopMatrix();
+}
+
+void drawBullet(Bullet* b)
+{
+  assert(b);
+
+  glColor4f(1, 1, 1, 1);
+  glBegin(GL_POINTS);
+    glVertex2f(b->x, b->y);
+  glEnd();
+}
+
+void cb_displayFunc()
+{
+  glClear(GL_COLOR_BUFFER_BIT);
+  glPushMatrix();
+//  glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
+
+  glTranslatef(winWidth / 2 - mouseX, winHeight / 2 - mouseY, 0);
+  glScalef(zoom, zoom, zoom);
+  glBegin(GL_TRIANGLES);
+    glVertex2f(0, 0);
+    glVertex2f(100, 0);
+    glVertex2f(0, 100);
+  glEnd();
+
+//  drawTexture(TEX_GROUND, game.width, game.height);
+
+  for (u32 i = 0; i < n_robots; i++)
+    drawRobot(&robot[i]);
+
+  for (u32 i = 0; i < n_bullets; i++)
+    drawBullet(&bullet[i]);
+  
+  glPopMatrix();
+  glutSwapBuffers();
+  glutPostRedisplay();
+}
+
+void cb_idleFunc()
+{
+  if (read(server, &game, sizeof(Game)) <= 0) return;
+
+  u32 nn_robots;
+  if (read(server, &nn_robots, sizeof(u32)) <= 0) return;
+  if (nn_robots > a_robots)
+  {
+    a_robots = nn_robots;
+    robot = REALLOC(robot, Robot, a_robots);
+  }
+  n_robots = nn_robots;
+  if (n_robots && read(server, robot, sizeof(Robot) * n_robots) <= 0) return;
+
+  u32 nn_bullets;
+  if (read(server, &nn_bullets, sizeof(u32)) <= 0) return;
+  if (nn_bullets > a_bullets)
+  {
+    a_bullets = nn_bullets;
+    bullet = REALLOC(bullet, Bullet, a_bullets);
+  }
+  n_bullets = nn_bullets;
+  if (n_bullets && read(server, bullet, sizeof(Bullet) * n_bullets) <= 0) return;
+}
+
+void cb_mouseFunc(int button, int state, int x, int y)
+{
+	(void) state;
+	(void) x;
+	(void) y;
+	
+	if (button == GLUT_WHEEL_UP)
+		zoom *= 1.1;
+	else if (button == GLUT_WHEEL_DOWN)
+		zoom /= 1.1;
+}
+
+void cb_motionFunc(int x, int y)
+{
+	mouseX = x;
+	mouseY = y;
+}
+
+void cb_passiveMotionFunc(int x, int y)
+{
+	mouseX = x;
+	mouseY = y;
+}
+
+void glInit()
+{
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glPointSize(3);
+
+  // two dimensionnal mode
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, winWidth, winHeight, 0, 0, 1);
+  glMatrixMode(GL_MODELVIEW);
+  glDisable(GL_DEPTH_TEST);
+
+  // enables transparency
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  //textures
+  glEnable(GL_TEXTURE_2D);
+
+  for (int i = 0; i < TEX_NB; i++)
+  {
+    printf("Loading %s\n", tex_name[i]);
+    texture[i] = SOIL_load_OGL_texture(tex_name[i], SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_INVERT_Y);
+
+    if (!texture[i])
+      abort();
+
+    glBindTexture(GL_TEXTURE_2D, texture[i]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width[i]);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height[i]);
+  }
+}
 
 int main(int argc, char** argv)
 {
@@ -51,15 +241,30 @@ int main(int argc, char** argv)
       abort();
     }
 
-  Display* display = Display_New(interface, port);
-
-  do
+  server = TCP_Connect(interface, port);
+  if (server < 0)
   {
-    Display_Update(display);
-    Display_Draw(display);
+    fprintf(stderr, "Could not connect to the server\n");
+    abort();
   }
-  while (display->opened);
+//  int flags = fcntl(server, F_GETFL, 0);
+//  fcntl(server, F_SETFL, flags | O_NONBLOCK);
 
-  Display_Delete(display);
+  glutInit(&argc, argv);
+  glutInitWindowSize(winWidth, winHeight);
+  winId = glutCreateWindow("Robot battle");
+  
+  glutDisplayFunc      (&cb_displayFunc);
+  glutIdleFunc         (&cb_idleFunc);
+  glutMouseFunc        (&cb_mouseFunc);
+  glutMotionFunc       (&cb_motionFunc);
+  glutPassiveMotionFunc(&cb_passiveMotionFunc);
+
+  glInit();
+  glutMainLoop();
+
+  free(bullet);
+  free(robot);
+  close(server);
   return 0;
 }

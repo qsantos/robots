@@ -23,6 +23,7 @@
 #include <sys/timeb.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "socket.h"
 
@@ -181,15 +182,17 @@ void Server_Tick(Server* s, float time)
   }
 }
 
-void Server_Dump(Server* s, s32 f)
+void Server_Dump(Server* s, s32 sock)
 {
   assert(s);
 
-  write(f, &s->game,      sizeof(Game));
-  write(f, &s->n_robots,  sizeof(u32));
-  write(f, s->robot,      sizeof(Robot) * s->n_robots);
-  write(f, &s->n_bullets, sizeof(u32));
-  write(f, s->bullet,     sizeof(Bullet) * s->n_bullets);
+  FILE* f = fdopen(sock, "w");
+  fwrite(&s->game,      sizeof(Game),  1,             f);
+  fwrite(&s->n_robots,  sizeof(u32),   1,             f);
+  fwrite(s->robot,      sizeof(Robot), s->n_robots,   f);
+  fwrite(&s->n_bullets, sizeof(u32),   1,             f);
+  fwrite(s->bullet,     sizeof(Bullet), s->n_bullets, f);
+  fflush(f);
 }
 
 void Server_Loop(Server* s)
