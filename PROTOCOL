@@ -125,6 +125,7 @@ General information about the game are sent following the scheme:
 
 When a robot's data need to be sent, the following scheme is used:
 
+> id           (uint32)
 > x            (float)
 > y            (float)
 > width        (float)
@@ -135,6 +136,8 @@ When a robot's data need to be sent, the following scheme is used:
 > velocity     (float)
 > turnSpeed    (float)
 > turnGunSpeed (float)
+
+where 'id' MUST be an uniq identifier for the robot on the server's instance.
 
 
 == Bullet information ==
@@ -147,4 +150,4 @@ When a bullet's data need to be sent, the following scheme is used:
 > angle  (float)
 > energy (float)
 
-'from' MUST be the identifier of the robot which sent the bullet.
+where 'from' MUST be the identifier of the robot which sent the bullet.
