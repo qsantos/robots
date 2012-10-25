@@ -29,6 +29,11 @@
 #define GLUT_WHEEL_UP   (3)
 #define GLUT_WHEEL_DOWN (4)
 
+static inline float max(float a, float b)
+{
+	return a > b ? a : b;
+}
+
 // texture information
 enum
 {
@@ -70,28 +75,39 @@ void drawTexture(u32 tex, float width, float height)
 	glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
-
+#define TEXT_BUFFER (1024)
+#define TEXT_FONT   GLUT_STROKE_ROMAN
 void drawRobot(Robot* r)
 {
 	assert(r);
 
 	glPushMatrix();
-
-	glTranslated(r->x, r->y, 0);
-	glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
-	drawTexture(TEX_CHASSIS, r->width, r->height);
-
+		glTranslated(r->x, r->y, 0);
+		glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
+		drawTexture(TEX_CHASSIS, r->width, r->height);
+		glPushMatrix();
+			glTranslatef(0, 21, 0);
+			glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
+			glTranslatef(0, -40, 0);
+			drawTexture(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
+		glPopMatrix();
+	glPopMatrix();
+	
 	glPushMatrix();
-		glTranslatef(0, 21, 0);
-		glRotatef(rad2deg(r->gunAngle), 0, 0, 1);
-		glTranslatef(0, -40, 0);
-		drawTexture(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
+		unsigned char glText[TEXT_BUFFER];
+		snprintf((string)glText, TEXT_BUFFER, "%f", r->energy);
+		float textWidth = glutStrokeLength(TEXT_FONT, glText);
+		float maxdim = max(r->height, r->width);
+		float scale = maxdim / textWidth;
+		textWidth *= scale;
+		
+		glColor4f(1, 1, 1, 1);
+		glTranslatef(r->x - textWidth / 2, r->y + maxdim, 0);
+		glScalef(scale, -scale, scale);
+		glRasterPos2i(0, 0);
+		glutStrokeString(TEXT_FONT, glText);
 	glPopMatrix();
 
-	glTranslatef(0, max(r->height, r->width), 0);
-	glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, "coucou");
-
-	glPopMatrix();
 }
 
 void drawBullet(Bullet* b)
@@ -112,11 +128,6 @@ void cb_displayFunc()
 
 	glTranslatef(winWidth / 2 - mouseX, winHeight / 2 - mouseY, 0);
 	glScalef(zoom, zoom, zoom);
-	glBegin(GL_TRIANGLES);
-		glVertex2f(0, 0);
-		glVertex2f(100, 0);
-		glVertex2f(0, 100);
-	glEnd();
 
 //  drawTexture(TEX_GROUND, game.width, game.height);
 
