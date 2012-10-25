@@ -47,6 +47,7 @@ typedef struct PACKED
 
 typedef struct PACKED
 {
+	u32   id;
 	float x;
 	float y;
 	float width;
@@ -61,6 +62,7 @@ typedef struct PACKED
 
 typedef struct PACKED
 {
+	u32   from;
 	float x;
 	float y;
 	float angle;

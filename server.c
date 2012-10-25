@@ -145,6 +145,7 @@ bool Server_HandleOrder(Server* s, u32 id)
 		Bullet* b = &s->bullet[s->n_bullets];
 		s->n_bullets++;
 
+		b->from   = r->id;
 		b->angle  = r->angle + r->gunAngle;
 		b->x      = r->x + 100 * sin(b->angle);
 		b->y      = r->y - 100 * cos(b->angle);
@@ -175,7 +176,8 @@ void Server_Tick(Server* s, float time)
 		for (u32 i = 0; i < s->n_robots; i++)
 			if (RobotCollidePoint(&s->robot[i], b->x, b->y))
 			{
-				s->robot[i].energy -= b->energy;
+				s->robot[b->from].energy += b->energy * 0.5;
+				s->robot[i]      .energy -= b->energy;
 				b->x = 0;
 				b->y = 0;
 				b->angle = 0;
@@ -207,16 +209,18 @@ void Server_Loop(Server* s)
 	fd_max++;
 
 	srandom(time(NULL));
+	u32 curId = 0;
 	for (u32 i = 0; i < s->game.n_clients; i++)
 	{
 		Robot r =
 		{
-		random() % (u32)s->game.width,
-		random() % (u32)s->game.height,
-		73,
-		116,
-		deg2rad(random() % 360),
-		0, 100.0, 0, 0, 0
+			curId++,
+			random() % (u32)s->game.width,
+			random() % (u32)s->game.height,
+			73,
+			116,
+			deg2rad(random() % 360),
+			0, 100.0, 0, 0, 0
 		};
 		s->robot[i] = r;
 		write(s->client[i], &r, sizeof(Robot));

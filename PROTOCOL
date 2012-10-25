@@ -141,7 +141,10 @@ When a robot's data need to be sent, the following scheme is used:
 
 When a bullet's data need to be sent, the following scheme is used:
 
+> from   (uint32)
 > x      (float)
 > y      (float)
 > angle  (float)
 > energy (float)
+
+'from' MUST be the identifier of the robot which sent the bullet.
