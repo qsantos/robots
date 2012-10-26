@@ -18,6 +18,24 @@
 
 #include "game.h"
 
+bool GameContainsPoint(Game* g, float x, float y)
+{
+	return 0 <= x && x <= g->width && 0 <= y && y <= g->height;
+}
+
+bool GameContainsRobot(Game* g, Robot* r)
+{
+	float wx =   r->width  / 2 * cos(r->angle);
+	float wy =   r->width  / 2 * sin(r->angle);
+	float hx = - r->height / 2 * sin(r->angle);
+	float hy =   r->height / 2 * cos(r->angle);
+	return
+		GameContainsPoint(g, r->x - wx - hx, r->y - wy - hy) ||
+		GameContainsPoint(g, r->x + wx - hx, r->y + wy - hy) ||
+		GameContainsPoint(g, r->x - wx + hx, r->y - wy + hy) ||
+		GameContainsPoint(g, r->x + wx + hx, r->y + wy + hy) ;
+}
+
 inline static float dot(float x0, float y0, float x1, float y1)
 {
 	return x0*x1 + y0*y1;
@@ -46,9 +64,9 @@ bool RobotCollideRobot(Robot* a, Robot* b)
 	float wy =   b->width  / 2 * sin(b->angle);
 	float hx = - b->height / 2 * sin(b->angle);
 	float hy =   b->height / 2 * cos(b->angle);
-	bool tl = RobotCollidePoint(a, b->x - wx - hx, b->y - wy - hy);
-	bool tr = RobotCollidePoint(a, b->x + wx - hx, b->y + wy - hy);
-	bool bl = RobotCollidePoint(a, b->x - wx + hx, b->y - wy + hy);
-	bool br = RobotCollidePoint(a, b->x + wx + hx, b->y + wy + hy);
-	return tl && tr && bl && br;
+	return
+		RobotCollidePoint(a, b->x - wx - hx, b->y - wy - hy) ||
+		RobotCollidePoint(a, b->x + wx - hx, b->y + wy - hy) ||
+		RobotCollidePoint(a, b->x - wx + hx, b->y - wy + hy) ||
+		RobotCollidePoint(a, b->x + wx + hx, b->y + wy + hy) ;
 }

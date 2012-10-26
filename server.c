@@ -32,6 +32,45 @@ const u8 MAGIC_WORD     = 0x42;
 const u8 VERSION_NUMBER = 0x01;
 const u8 START_MESSAGE  = 0x42;
 
+static inline u32 enableBullet(Server* s)
+{
+	if (s->n_bullets >= s->a_bullets)
+	{
+		if (s->a_bullets)
+		{
+			s->a_bullets *= 2;
+			s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
+			memset(&s->active_bullets[s->a_bullets/32/2], 0, s->a_bullets/32*sizeof(u32)/2);
+		}
+		else
+		{
+			s->a_bullets = 32;
+			s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
+			memset(s->active_bullets, 0, s->a_bullets/32/sizeof(u32));
+		}
+		s->bullets = REALLOC(s->bullets, Bullet, s->a_bullets);
+	}
+	u32 i32 = 0;
+	while (s->active_bullets[i32] == (u32)-1)
+		i32++;
+	u32 bitfield = s->active_bullets[i32];
+	u32 i = i32 * 32;
+	while (bitfield % 2)
+	{
+		i++;
+		bitfield >>= 1;
+	}
+	s->active_bullets[i/32] |= (1 << (i%32));
+	s->n_bullets++;
+	
+	return i;
+}
+static inline void disableBullet(Server* s, u32 i)
+{
+	s->active_bullets[i/32] ^= (1 << (i%32));
+	s->n_bullets--;
+}
+
 Server* Server_New(string interface, u16 port, u32 n_clients)
 {
 	Server* ret = ALLOC(Server, 1);
@@ -144,6 +183,8 @@ bool Server_HandleOrder(Server* s, u32 id)
 		return false;
 
 	Robot* r = &s->robots[id];
+	Bullet* b;
+	u32 i;
 	switch (order.code)
 	{
 	case ADVANCE:
@@ -159,43 +200,14 @@ bool Server_HandleOrder(Server* s, u32 id)
 		break;
 
 	case FIRE:
-		printf("%p\n", (void*)s->bullets);
-		if (s->n_bullets >= s->a_bullets)
-		{
-			if (s->a_bullets)
-			{
-				s->a_bullets *= 2;
-				s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
-				memset(&s->active_bullets[s->a_bullets/32/2], 0, s->a_bullets/32*sizeof(u32)/2);
-			}
-			else
-			{
-				s->a_bullets = 32;
-				s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
-				memset(s->active_bullets, 0, s->a_bullets/32/sizeof(u32));
-			}
-			s->bullets = REALLOC(s->bullets, Bullet, s->a_bullets);
-		}
-		u32 i32 = 0;
-		while (s->active_bullets[i32] == (u32)-1)
-			i32++;
-		u32 bitfield = s->active_bullets[i32];
-		u32 i = i32 * 32;
-		while (bitfield % 2)
-		{
-			i++;
-			bitfield >>= 1;
-		}
-		s->active_bullets[i32] |= (1 << (i%32));
-		Bullet* b = &s->bullets[i];
-
+		// don't merge the two next lines: enableBullet may change s->bullets pointer
+		i = enableBullet(s);
+		b = &(s->bullets[i]);
 		b->from   = r->id;
 		b->angle  = r->angle + r->gunAngle;
 		b->x      = r->x + 100 * sin(b->angle);
 		b->y      = r->y - 100 * cos(b->angle);
 		b->energy = order.param;
-		
-		s->n_bullets++;
 		break;
 	}
 
@@ -209,10 +221,22 @@ void Server_Tick(Server* s, float time)
 	for (u32 i = 0; i < s->n_robots; i++)
 	{
 		Robot* r = &s->robots[i];
-		r->x += time * r->velocity * sin(r->angle);
-		r->y -= time * r->velocity * cos(r->angle);
-		r->angle += deg2rad(time * r->turnSpeed);
 		r->gunAngle += deg2rad(time * r->turnGunSpeed);
+		if (r->velocity || r->turnSpeed)
+		{
+			Robot nr;
+			memcpy(&nr, r, sizeof(Robot));
+			nr.angle += deg2rad(time * r->turnSpeed);
+			nr.x += time * r->velocity * sin(r->angle);
+			nr.y -= time * r->velocity * cos(r->angle);
+
+			bool collide = false;
+			for (u32 j = 0; j < s->n_robots && !collide; j++)
+				if (j != i && RobotCollideRobot(&s->robots[j], &nr))
+					collide = true;
+			if (!collide)
+				memcpy(r, &nr, sizeof(Robot));
+		}
 	}
 	u32 i = 0;
 	for (u32 i32 = 0; i32 < s->a_bullets / 32; i32++)
@@ -225,15 +249,17 @@ void Server_Tick(Server* s, float time)
 				Bullet* b = &s->bullets[i];
 				b->x += time * 100 * sin(b->angle);
 				b->y -= time * 100 * cos(b->angle);
-				for (u32 i = 0; i < s->n_robots; i++)
-					if (RobotCollidePoint(&s->robots[i], b->x, b->y))
-					{
-						s->robots[b->from].energy += b->energy * 0.5;
-						s->robots[i]      .energy -= b->energy;
-//						s->active_bullets[i32] ^= (1 << (i%32));
-						b->x = 0;
-						b->y = 0;
-					}
+				if (!GameContainsPoint(&s->game, b->x, b->y))
+					disableBullet(s, i);
+				else
+					for (u32 i = 0; i < s->n_robots; i++)
+						if (RobotCollidePoint(&s->robots[i], b->x, b->y))
+						{
+							s->robots[b->from].energy += b->energy * 0.5;
+							s->robots[i]      .energy -= b->energy;
+							disableBullet(s, i);
+							break;
+						}
 			}
 			bitfield >>= 1;
 		}
@@ -315,10 +341,9 @@ void Server_Loop(Server* s)
 		int n_events = epoll_wait(epollfd, events, 10, 1000 / FRAMERATE);
 		for (s32 i = 0; i < n_events; i++)
 		{
-		u32 client = events[i].data.u32;
-		while (Server_HandleOrder(s, client));
+			u32 client = events[i].data.u32;
+			while (Server_HandleOrder(s, client));
 		}
-
 
 		last = cur;
 		ftime(&cur);

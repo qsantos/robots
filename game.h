@@ -69,6 +69,8 @@ typedef struct PACKED
 	float energy;
 } Bullet;
 
+bool GameContainsPoint(Game*, float, float);
+bool GameContainsRobot(Game*, Robot*);
 bool RobotCollidePoint(Robot*, float, float);
 bool RobotCollideRobot(Robot*, Robot*);
 
