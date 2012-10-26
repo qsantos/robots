@@ -129,7 +129,7 @@ void cb_displayFunc()
 	glTranslatef(winWidth / 2 - mouseX, winHeight / 2 - mouseY, 0);
 	glScalef(zoom, zoom, zoom);
 
-//  drawTexture(TEX_GROUND, game.width, game.height);
+//	drawTexture(TEX_GROUND, game.width, game.height);
 
 	for (u32 i = 0; i < n_robots; i++)
 		drawRobot(&robot[i]);

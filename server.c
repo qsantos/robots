@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "socket.h"
 
@@ -44,13 +45,16 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 		return NULL;
 	}
 
-	ret->client    = ALLOC(s32,   n_clients);
-	ret->n_robots  = n_clients;
-	ret->a_robots  = ret->n_robots;
-	ret->robot     = ALLOC(Robot, ret->a_robots);
-	ret->n_bullets = 0;
-	ret->a_bullets = ret->n_bullets;
-	ret->bullet    = NULL;
+	ret->client         = ALLOC(s32,   n_clients);
+	
+	ret->n_robots       = n_clients;
+	ret->a_robots       = ret->n_robots;
+	ret->robots         = ALLOC(Robot, ret->a_robots);
+	
+	ret->n_bullets      = 0;
+	ret->a_bullets      = ret->n_bullets;
+	ret->active_bullets = NULL;
+	ret->bullets        = NULL;
 
 	ret->game.width     = 1024;
 	ret->game.height    = 768;
@@ -64,8 +68,9 @@ void Server_Delete(Server* s)
 {
 	assert(s);
 
-	free(s->bullet);
-	free(s->robot);
+	free(s->active_bullets);
+	free(s->bullets);
+	free(s->robots);
 	for (u32 i = 0; i < s->game.n_clients; i++)
 		close(s->client[i]);
 	free(s->client);
@@ -82,17 +87,28 @@ void Server_Debug(Server* s)
 	printf("Robots:\n");
 	for (u32 i = 0; i < s->n_robots; i++)
 	{
-		Robot r = s->robot[i];
+		Robot r = s->robots[i];
 		printf("#%lu: (%f, %f) %f° %f° %f\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
 	}
 	printf("\n");
-	printf("Bullets:\n");
-	for (u32 i = 0; i < s->n_bullets; i++)
 	{
-		Bullet b = s->bullet[i];
-		printf("#%lu: (%f, %f), %f°, %f\n", i, b.x, b.y, b.angle, b.energy);
+		printf("Bullets:\n");
+		u32 i = 0;
+		for (u32 i32 = 0; i32 < s->a_bullets / 32; i32++)
+		{
+			u32 bitfield = s->active_bullets[i32];
+			for (u32 j = 0; i < s->n_bullets && j < 32; i++, j++)
+			{
+				if (bitfield % 2)
+				{
+					Bullet* b = &s->bullets[i];
+					printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, b->angle, b->energy);
+				}
+				bitfield >>= 1;
+			}
+		}
+		printf("\n");
 	}
-	printf("\n");
 }
 
 void Server_AcceptDisplay(Server* s)
@@ -127,7 +143,7 @@ bool Server_HandleOrder(Server* s, u32 id)
 	if (read(s->client[id], &order,  sizeof(Order)) <= 0)
 		return false;
 
-	Robot* r = &s->robot[id];
+	Robot* r = &s->robots[id];
 	switch (order.code)
 	{
 	case ADVANCE:
@@ -143,18 +159,43 @@ bool Server_HandleOrder(Server* s, u32 id)
 		break;
 
 	case FIRE:
+		printf("%p\n", (void*)s->bullets);
 		if (s->n_bullets >= s->a_bullets)
 		{
-			s->a_bullets = s->a_bullets ? 2*s->a_bullets : 1;
-			s->bullet = REALLOC(s->bullet, Bullet, s->a_bullets);
+			if (s->a_bullets)
+			{
+				s->a_bullets *= 2;
+				s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
+				memset(&s->active_bullets[s->a_bullets/32/2], 0, s->a_bullets/32*sizeof(u32)/2);
+			}
+			else
+			{
+				s->a_bullets = 32;
+				s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
+				memset(s->active_bullets, 0, s->a_bullets/32/sizeof(u32));
+			}
+			s->bullets = REALLOC(s->bullets, Bullet, s->a_bullets);
 		}
-		Bullet* b = &s->bullet[s->n_bullets++];
+		u32 i32 = 0;
+		while (s->active_bullets[i32] == (u32)-1)
+			i32++;
+		u32 bitfield = s->active_bullets[i32];
+		u32 i = i32 * 32;
+		while (bitfield % 2)
+		{
+			i++;
+			bitfield >>= 1;
+		}
+		s->active_bullets[i32] |= (1 << (i%32));
+		Bullet* b = &s->bullets[i];
 
 		b->from   = r->id;
 		b->angle  = r->angle + r->gunAngle;
 		b->x      = r->x + 100 * sin(b->angle);
 		b->y      = r->y - 100 * cos(b->angle);
 		b->energy = order.param;
+		
+		s->n_bullets++;
 		break;
 	}
 
@@ -167,26 +208,35 @@ void Server_Tick(Server* s, float time)
 
 	for (u32 i = 0; i < s->n_robots; i++)
 	{
-		Robot* r = &s->robot[i];
+		Robot* r = &s->robots[i];
 		r->x += time * r->velocity * sin(r->angle);
 		r->y -= time * r->velocity * cos(r->angle);
 		r->angle += deg2rad(time * r->turnSpeed);
 		r->gunAngle += deg2rad(time * r->turnGunSpeed);
 	}
-	for (u32 i = 0; i < s->n_bullets; i++)
+	u32 i = 0;
+	for (u32 i32 = 0; i32 < s->a_bullets / 32; i32++)
 	{
-		Bullet* b = &s->bullet[i];
-		b->x += time * 100 * sin(b->angle);
-		b->y -= time * 100 * cos(b->angle);
-		for (u32 i = 0; i < s->n_robots; i++)
-			if (RobotCollidePoint(&s->robot[i], b->x, b->y))
+		u32 bitfield = s->active_bullets[i32];
+		for (u32 j = 0; i < s->n_bullets && j < 32; i++, j++)
+		{
+			if (bitfield % 2)
 			{
-				s->robot[b->from].energy += b->energy * 0.5;
-				s->robot[i]      .energy -= b->energy;
-				b->x = 0;
-				b->y = 0;
-				b->angle = 0;
+				Bullet* b = &s->bullets[i];
+				b->x += time * 100 * sin(b->angle);
+				b->y -= time * 100 * cos(b->angle);
+				for (u32 i = 0; i < s->n_robots; i++)
+					if (RobotCollidePoint(&s->robots[i], b->x, b->y))
+					{
+						s->robots[b->from].energy += b->energy * 0.5;
+						s->robots[i]      .energy -= b->energy;
+//						s->active_bullets[i32] ^= (1 << (i%32));
+						b->x = 0;
+						b->y = 0;
+					}
 			}
+			bitfield >>= 1;
+		}
 	}
 }
 
@@ -197,11 +247,21 @@ void Server_Dump(Server* s, s32 sock)
 	FILE* f = fdopen(sock, "w");
 	fwrite(&s->game,      sizeof(Game),   1,            f);
 	fwrite(&s->n_robots,  sizeof(u32),    1,            f);
-	fwrite(s->robot,      sizeof(Robot),  s->n_robots,  f);
+	fwrite(s->robots,     sizeof(Robot),  s->n_robots,  f);
 	fwrite(&s->n_bullets, sizeof(u32),    1,            f);
-	fwrite(s->bullet,     sizeof(Bullet), s->n_bullets, f);
+	u32 i = 0;
+	for (u32 i32 = 0; i32 < s->a_bullets; i32++)
+	{
+		u32 bitfield = s->active_bullets[i32];
+		for (u32 j = 0; i < s->n_bullets && j < 32; i++, j++)
+		{
+			if (bitfield % 2)
+				fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
+			bitfield >>= 1;
+		}
+	}
 	fflush(f);
-	free(f);
+//	free(f); TODO
 }
 
 void Server_Loop(Server* s)
@@ -228,7 +288,7 @@ void Server_Loop(Server* s)
 			deg2rad(random() % 360),
 			0, 100.0, 0, 0, 0
 		};
-		s->robot[i] = r;
+		s->robots[i] = r;
 		write(s->client[i], &r, sizeof(Robot));
 	}
 	for (u32 i = 0; i < s->game.n_clients; i++)
@@ -263,7 +323,7 @@ void Server_Loop(Server* s)
 		last = cur;
 		ftime(&cur);
 		Server_Tick(s, (cur.time-last.time)+((float)(cur.millitm-last.millitm) / 1000));
-		Server_Dump(s, s->display);
 		Server_Debug(s);
+		Server_Dump(s, s->display);
 	}
 }

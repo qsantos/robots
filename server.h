@@ -29,11 +29,12 @@ typedef struct
 
 	Game    game;
 
-	Robot*  robot;
+	Robot*  robots;
 	u32     n_robots;
 	u32     a_robots;
 
-	Bullet* bullet;
+	Bullet* bullets;
+	u32*    active_bullets;
 	u32     n_bullets;
 	u32     a_bullets;
 } Server;
