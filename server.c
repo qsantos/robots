@@ -155,7 +155,7 @@ void Server_AcceptDisplay(Server* s)
 	assert(s);
 
 	s->display    = TCP_Accept(s->listener);
-	s->display_fh = fdopen(s->display, "r");
+	s->display_fh = fdopen(s->display, "w");
 }
 
 void Server_AcceptClients(Server* s)
@@ -270,6 +270,7 @@ void Server_Tick(Server* s, float time)
 void Server_Dump(Server* s, FILE* f)
 {
 	assert(s);
+	assert(f);
 
 	fwrite(&s->game,      sizeof(Game),   1,            f);
 	fwrite(&s->n_robots,  sizeof(u32),    1,            f);
@@ -287,7 +288,6 @@ void Server_Dump(Server* s, FILE* f)
 		}
 	}
 	fflush(f);
-//	free(f); TODO
 }
 
 void Server_Loop(Server* s)
