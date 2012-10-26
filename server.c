@@ -32,6 +32,23 @@ const u8 MAGIC_WORD     = 0x42;
 const u8 VERSION_NUMBER = 0x01;
 const u8 START_MESSAGE  = 0x42;
 
+#define FOREACH_BULLET                                               \
+	{                                                            \
+		u32 i = 0;                                           \
+		for (u32 i32 = 0; i32 < s->a_bullets / 32 ; i32++)   \
+		{                                                    \
+			u32 bitfield = s->active_bullets[i32];       \
+			for (u32 j = 0; j < 32; i++, j++)            \
+			{                                            \
+				if (bitfield % 2)                    \
+				{
+#define 	DONE_BULLET                                          \
+				}                                    \
+				bitfield >>= 1;                      \
+			}                                            \
+		}                                                    \
+	}
+
 static inline u32 enableBullet(Server* s)
 {
 	if (s->n_bullets >= s->a_bullets)
@@ -130,24 +147,14 @@ void Server_Debug(Server* s)
 		printf("#%lu: (%f, %f) %f° %f° %f\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
 	}
 	printf("\n");
-	{
-		printf("Bullets:\n");
-		u32 i = 0;
-		for (u32 i32 = 0; i32 < s->a_bullets / 32; i32++)
-		{
-			u32 bitfield = s->active_bullets[i32];
-			for (u32 j = 0; i < s->n_bullets && j < 32; i++, j++)
-			{
-				if (bitfield % 2)
-				{
-					Bullet* b = &s->bullets[i];
-					printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, b->angle, b->energy);
-				}
-				bitfield >>= 1;
-			}
-		}
-		printf("\n");
-	}
+
+	printf("Bullets:\n");
+	FOREACH_BULLET
+		Bullet* b = &s->bullets[i];
+		printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, b->angle, b->energy);
+	DONE_BULLET
+	printf("\n");
+
 }
 
 void Server_AcceptDisplay(Server* s)
@@ -244,32 +251,22 @@ void Server_Tick(Server* s, float time)
 				memcpy(r, &nr, sizeof(Robot));
 		}
 	}
-	u32 i = 0;
-	for (u32 i32 = 0; i32 < s->a_bullets / 32; i32++)
-	{
-		u32 bitfield = s->active_bullets[i32];
-		for (u32 j = 0; i < s->n_bullets && j < 32; i++, j++)
-		{
-			if (bitfield % 2)
-			{
-				Bullet* b = &s->bullets[i];
-				b->x += time * 100 * sin(b->angle);
-				b->y -= time * 100 * cos(b->angle);
-				if (!GameContainsPoint(&s->game, b->x, b->y))
+	FOREACH_BULLET
+		Bullet* b = &s->bullets[i];
+		b->x += time * 100 * sin(b->angle);
+		b->y -= time * 100 * cos(b->angle);
+		if (!GameContainsPoint(&s->game, b->x, b->y))
+			disableBullet(s, i);
+		else
+			for (u32 k = 0; k < s->n_robots; k++)
+				if (RobotCollidePoint(&s->robots[k], b->x, b->y))
+				{
+					s->robots[b->from].energy += b->energy * 0.5;
+					s->robots[k]      .energy -= b->energy;
 					disableBullet(s, i);
-				else
-					for (u32 i = 0; i < s->n_robots; i++)
-						if (RobotCollidePoint(&s->robots[i], b->x, b->y))
-						{
-							s->robots[b->from].energy += b->energy * 0.5;
-							s->robots[i]      .energy -= b->energy;
-							disableBullet(s, i);
-							break;
-						}
-			}
-			bitfield >>= 1;
-		}
-	}
+					break;
+				}
+	DONE_BULLET
 }
 
 void Server_Dump(Server* s, FILE* f)
@@ -277,21 +274,17 @@ void Server_Dump(Server* s, FILE* f)
 	assert(s);
 	assert(f);
 
-	fwrite(&s->game,      sizeof(Game),   1,            f);
-	fwrite(&s->n_robots,  sizeof(u32),    1,            f);
-	fwrite(s->robots,     sizeof(Robot),  s->n_robots,  f);
-	fwrite(&s->n_bullets, sizeof(u32),    1,            f);
-	u32 i = 0;
-	for (u32 i32 = 0; i32 < s->a_bullets; i32++)
-	{
-		u32 bitfield = s->active_bullets[i32];
-		for (u32 j = 0; i < s->n_bullets && j < 32; i++, j++)
-		{
-			if (bitfield % 2)
-				fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
-			bitfield >>= 1;
-		}
-	}
+	fwrite(&s->game,      sizeof(Game),   1,           f);
+	fwrite(&s->n_robots,  sizeof(u32),    1,           f);
+	fwrite(s->robots,     sizeof(Robot),  s->n_robots, f);
+	fwrite(&s->n_bullets, sizeof(u32),    1,           f);
+	
+	u32 tmp = 0;
+	FOREACH_BULLET
+		tmp++;
+		fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
+	DONE_BULLET
+	
 	fflush(f);
 }
 
