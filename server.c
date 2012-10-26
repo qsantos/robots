@@ -231,11 +231,16 @@ void Server_Tick(Server* s, float time)
 			nr.x += time * r->velocity * sin(r->angle);
 			nr.y -= time * r->velocity * cos(r->angle);
 
-			bool collide = false;
+			bool collide = !GameContainsRobot(&s->game, &nr);
 			for (u32 j = 0; j < s->n_robots && !collide; j++)
 				if (j != i && RobotCollideRobot(&s->robots[j], &nr))
 					collide = true;
-			if (!collide)
+			if (collide)
+			{
+				r->velocity  = 0;
+				r->turnSpeed = 0;
+			}
+			else
 				memcpy(r, &nr, sizeof(Robot));
 		}
 	}

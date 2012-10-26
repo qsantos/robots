@@ -30,9 +30,9 @@ bool GameContainsRobot(Game* g, Robot* r)
 	float hx = - r->height / 2 * sin(r->angle);
 	float hy =   r->height / 2 * cos(r->angle);
 	return
-		GameContainsPoint(g, r->x - wx - hx, r->y - wy - hy) ||
-		GameContainsPoint(g, r->x + wx - hx, r->y + wy - hy) ||
-		GameContainsPoint(g, r->x - wx + hx, r->y - wy + hy) ||
+		GameContainsPoint(g, r->x - wx - hx, r->y - wy - hy) &&
+		GameContainsPoint(g, r->x + wx - hx, r->y + wy - hy) &&
+		GameContainsPoint(g, r->x - wx + hx, r->y - wy + hy) &&
 		GameContainsPoint(g, r->x + wx + hx, r->y + wy + hy) ;
 }
 
