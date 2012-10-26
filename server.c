@@ -95,8 +95,8 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 	ret->active_bullets = NULL;
 	ret->bullets        = NULL;
 
-	ret->game.width     = 1024;
-	ret->game.height    = 768;
+	ret->game.width     = 1000;
+	ret->game.height    = 1000;
 	ret->game.n_slots   = n_clients;
 	ret->game.n_clients = 0;
 
@@ -154,7 +154,8 @@ void Server_AcceptDisplay(Server* s)
 {
 	assert(s);
 
-	s->display = TCP_Accept(s->listener);
+	s->display    = TCP_Accept(s->listener);
+	s->display_fh = fdopen(s->display, "r");
 }
 
 void Server_AcceptClients(Server* s)
@@ -266,11 +267,10 @@ void Server_Tick(Server* s, float time)
 	}
 }
 
-void Server_Dump(Server* s, s32 sock)
+void Server_Dump(Server* s, FILE* f)
 {
 	assert(s);
 
-	FILE* f = fdopen(sock, "w");
 	fwrite(&s->game,      sizeof(Game),   1,            f);
 	fwrite(&s->n_robots,  sizeof(u32),    1,            f);
 	fwrite(s->robots,     sizeof(Robot),  s->n_robots,  f);
@@ -349,6 +349,6 @@ void Server_Loop(Server* s)
 		ftime(&cur);
 		Server_Tick(s, (cur.time-last.time)+((float)(cur.millitm-last.millitm) / 1000));
 		Server_Debug(s);
-		Server_Dump(s, s->display);
+		Server_Dump(s, s->display_fh);
 	}
 }

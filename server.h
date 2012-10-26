@@ -25,6 +25,7 @@ typedef struct
 {
 	s32     listener;
 	s32     display;
+	FILE*   display_fh;
 	s32*    client;
 
 	Game    game;
@@ -46,7 +47,7 @@ void    Server_AcceptDisplay(Server*);
 void    Server_AcceptClients(Server*);
 bool    Server_HandleOrder  (Server*, u32);
 void    Server_Tick         (Server*, float);
-void    Server_Dump         (Server*, s32);
+void    Server_Dump         (Server*, FILE*);
 void    Server_Loop         (Server*);
 
 #endif
