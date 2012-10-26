@@ -46,8 +46,10 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 
 	ret->client    = ALLOC(s32,   n_clients);
 	ret->n_robots  = n_clients;
-	ret->robot     = ALLOC(Robot, n_clients);
+	ret->a_robots  = ret->n_robots;
+	ret->robot     = ALLOC(Robot, ret->a_robots);
 	ret->n_bullets = 0;
+	ret->a_bullets = ret->n_bullets;
 	ret->bullet    = NULL;
 
 	ret->game.width     = 1024;
@@ -141,9 +143,12 @@ bool Server_HandleOrder(Server* s, u32 id)
 		break;
 
 	case FIRE:
-		s->bullet = REALLOC(s->bullet, Bullet, s->n_bullets+1);
-		Bullet* b = &s->bullet[s->n_bullets];
-		s->n_bullets++;
+		if (s->n_bullets >= s->a_bullets)
+		{
+			s->a_bullets = s->a_bullets ? 2*s->a_bullets : 1;
+			s->bullet = REALLOC(s->bullet, Bullet, s->a_bullets);
+		}
+		Bullet* b = &s->bullet[s->n_bullets++];
 
 		b->from   = r->id;
 		b->angle  = r->angle + r->gunAngle;
