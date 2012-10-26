@@ -195,12 +195,13 @@ void Server_Dump(Server* s, s32 sock)
 	assert(s);
 
 	FILE* f = fdopen(sock, "w");
-	fwrite(&s->game,      sizeof(Game),  1,             f);
-	fwrite(&s->n_robots,  sizeof(u32),   1,             f);
-	fwrite(s->robot,      sizeof(Robot), s->n_robots,   f);
-	fwrite(&s->n_bullets, sizeof(u32),   1,             f);
+	fwrite(&s->game,      sizeof(Game),   1,            f);
+	fwrite(&s->n_robots,  sizeof(u32),    1,            f);
+	fwrite(s->robot,      sizeof(Robot),  s->n_robots,  f);
+	fwrite(&s->n_bullets, sizeof(u32),    1,            f);
 	fwrite(s->bullet,     sizeof(Bullet), s->n_bullets, f);
 	fflush(f);
+	free(f);
 }
 
 void Server_Loop(Server* s)
