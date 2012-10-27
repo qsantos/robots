@@ -28,120 +28,6 @@
 
 #include "socket.h"
 
-#define FOREACH_ROBOT(I)                                                \
-	{                                                               \
-		u32 I = 0;                                              \
-		for (u32 I##32 = 0; I##32 < s->a_robots / 32 ; I##32++) \
-		{                                                       \
-			u32 bitfield = s->active_robots[I##32];         \
-			for (u32 I##b = 0; I##b < 32; I++, I##b++)      \
-			{                                               \
-				if (bitfield % 2)                       \
-				{
-//					code (s->robots[I] is active)
-#define DONE_ROBOT                                                      \
-				}                                       \
-				bitfield >>= 1;                         \
-			}                                               \
-		}                                                       \
-	}
-
-#define FOREACH_BULLET(I)                                                \
-	{                                                                \
-		u32 I = 0;                                               \
-		for (u32 I##32 = 0; I##32 < s->a_bullets / 32 ; I##32++) \
-		{                                                        \
-			u32 bitfield = s->active_bullets[I##32];         \
-			for (u32 I##b = 0; I##b < 32; I++, I##b++)       \
-			{                                                \
-				if (bitfield % 2)                        \
-				{
-//					code (s->bullets[I] is active)
-#define DONE_BULLET                                                      \
-				}                                        \
-				bitfield >>= 1;                          \
-			}                                                \
-		}                                                        \
-	}
- 
-static inline u32 enableRobot(Server* s)
-{
-	if (s->n_robots >= s->a_robots)
-	{
-		if (s->a_robots)
-		{
-			s->a_robots *= 2;
-			s->active_robots = REALLOC(s->active_robots, u32, s->a_robots / 32);
-			memset(&s->active_robots[s->a_robots/32/2], 0, s->a_robots/32*sizeof(u32)/2);
-		}
-		else
-		{
-			s->a_robots = 32;
-			s->active_robots = REALLOC(s->active_robots, u32, s->a_robots / 32);
-			memset(s->active_robots, 0, s->a_robots/32*sizeof(u32));
-		}
-		s->robots = REALLOC(s->robots, Robot, s->a_robots);
-	}
-	u32 i32 = 0;
-	while (s->active_robots[i32] == (u32)-1)
-		i32++;
-	u32 bitfield = s->active_robots[i32];
-	u32 i = i32 * 32;
-	while (bitfield % 2)
-	{
-		i++;
-		bitfield >>= 1;
-	}
-	s->active_robots[i/32] |= (1 << (i%32));
-	s->n_robots++;
-	
-	return i;
-}
-static inline void disableRobot(Server* s, u32 i)
-{
-	s->active_robots[i/32] ^= (1 << (i%32));
-	s->n_robots--;
-}
-
-static inline u32 enableBullet(Server* s)
-{
-	if (s->n_bullets >= s->a_bullets)
-	{
-		if (s->a_bullets)
-		{
-			s->a_bullets *= 2;
-			s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
-			memset(&s->active_bullets[s->a_bullets/32/2], 0, s->a_bullets/32*sizeof(u32)/2);
-		}
-		else
-		{
-			s->a_bullets = 32;
-			s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
-			memset(s->active_bullets, 0, s->a_bullets/32*sizeof(u32));
-		}
-		s->bullets = REALLOC(s->bullets, Bullet, s->a_bullets);
-	}
-	u32 i32 = 0;
-	while (s->active_bullets[i32] == (u32)-1)
-		i32++;
-	u32 bitfield = s->active_bullets[i32];
-	u32 i = i32 * 32;
-	while (bitfield % 2)
-	{
-		i++;
-		bitfield >>= 1;
-	}
-	s->active_bullets[i/32] |= (1 << (i%32));
-	s->n_bullets++;
-	
-	return i;
-}
-static inline void disableBullet(Server* s, u32 i)
-{
-	s->active_bullets[i/32] ^= (1 << (i%32));
-	s->n_bullets--;
-}
-
 static inline void decreaseEnergy(Server* s, u32 i, float amount)
 {
 	s->robots[i].energy -= amount;
@@ -152,7 +38,7 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 		fwrite(&s->robots[i], sizeof(Robot), 1, s->display_fh);
 		fflush(s->display_fh);
 		// TODO: send to robots
-		disableRobot(s, i);
+		DISABLE(s->, robots, i);
 	}
 }
 
@@ -170,21 +56,13 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 	}
 
 	ret->client         = ALLOC(s32,   n_clients);
-
-	ret->n_robots       = 0;
-	ret->a_robots       = n_clients + (32 - (n_clients%32)); // must be a multiple of 32 (due to bitfield)
-	ret->active_robots  = ALLOC(u32,   ret->a_robots / 32);
-	ret->robots         = ALLOC(Robot, ret->a_robots);
-
-	ret->n_bullets      = 0;
-	ret->a_bullets      = 0;
-	ret->active_bullets = NULL;
-	ret->bullets        = NULL;
-
 	ret->game.width     = 1000;
 	ret->game.height    = 1000;
 	ret->game.n_slots   = n_clients;
 	ret->game.n_clients = 0;
+
+	INIT(ret->, robots);
+	INIT(ret->, bullets);
 
 	return ret;
 }
@@ -193,10 +71,8 @@ void Server_Delete(Server* s)
 {
 	assert(s);
 
-	free(s->active_bullets);
-	free(s->bullets);
-	free(s->active_robots);
-	free(s->robots);
+	FREE(s->, bullets);
+	FREE(s->, robots);
 	for (u32 i = 0; i < s->game.n_clients; i++)
 		close(s->client[i]);
 	free(s->client);
@@ -211,17 +87,17 @@ void Server_Debug(Server* s)
 
 	printf("==================================\n");
 	printf("Robots:\n");
-	FOREACH_ROBOT(i)
+	FOREACH(s->, robots, i)
 		Robot r = s->robots[i];
 		printf("#%lu: (%f, %f) %f° %f° %f\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
-	DONE_ROBOT
+	DONE
 	printf("\n");
 
 	printf("Bullets:\n");
-	FOREACH_BULLET(i)
+	FOREACH(s->, bullets, i)
 		Bullet* b = &s->bullets[i];
 		printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, b->angle, b->energy);
-	DONE_BULLET
+	DONE
 	printf("\n");
 
 }
@@ -280,8 +156,9 @@ bool Server_HandleOrder(Server* s, u32 id)
 		if (r->energy >= order.param)
 		{
 			r->energy -= order.param;
-			// don't merge the two next lines: enableBullet may change s->bullets pointer
-			u32 i = enableBullet(s);
+			// don't merge the next lines: ENABLE may change s->bullets pointer
+			u32 i;
+			ENABLE(s->, Bullet, bullets, i);
 			Bullet* b = &s->bullets[i];
 			b->from    = r->id;
 			b->angle   = r->angle + r->gunAngle;
@@ -298,8 +175,11 @@ bool Server_HandleOrder(Server* s, u32 id)
 void Server_Tick(Server* s, float time)
 {
 	assert(s);
+	
+	if (s->active_robots[0] == 3)
+		decreaseEnergy(s, 0, time*10);
 
-	FOREACH_ROBOT(i)
+	FOREACH(s->, robots, i)
 		Robot* r = &s->robots[i];
 		r->gunAngle += deg2rad(time * r->turnGunSpeed);
 		if (!r->velocity && !r->turnSpeed)
@@ -313,12 +193,12 @@ void Server_Tick(Server* s, float time)
 
 		bool collide = !GameContainsRobot(&s->game, &nr);
 		if (!collide)
-			FOREACH_ROBOT(j)
+			FOREACH(s->, robots, j)
 				if (collide) // breaks every inner loop as soon as possible
 					break;
 				if (j != i && RobotCollideRobot(&s->robots[j], &nr))
 					collide = true;
-			DONE_ROBOT
+			DONE
 		if (collide)
 		{
 			r->velocity  = 0;
@@ -326,25 +206,25 @@ void Server_Tick(Server* s, float time)
 		}
 		else
 			memcpy(r, &nr, sizeof(Robot));
-	DONE_ROBOT
+	DONE
 
-	FOREACH_BULLET(i)
+	FOREACH(s->, bullets, i)
 		Bullet* b = &s->bullets[i];
 		b->x += time * 100 * sin(b->angle);
 		b->y -= time * 100 * cos(b->angle);
 		if (!GameContainsPoint(&s->game, b->x, b->y))
-			disableBullet(s, i);
+			DISABLE(s->, bullets, i)
 		else
-			FOREACH_ROBOT(j)
+			FOREACH(s->, robots, j)
 				if (RobotCollidePoint(&s->robots[j], b->x, b->y))
 				{
 					s->robots[b->from].energy += b->energy * 1.5;
 					decreaseEnergy(s, j, b->energy);
-					disableBullet(s, i);
+					DISABLE(s->, bullets, i);
 					break;
 				}
-			DONE_ROBOT
-	DONE_BULLET
+			DONE
+	DONE
 }
 
 void Server_Dump(Server* s, FILE* f)
@@ -357,14 +237,14 @@ void Server_Dump(Server* s, FILE* f)
 	fwrite(&s->game,      sizeof(Game), 1, f);
 	
 	fwrite(&s->n_robots,  sizeof(u32), 1, f);
-	FOREACH_ROBOT(i)
+	FOREACH(s->, robots, i)
 		fwrite(&s->robots[i], sizeof(Robot), 1, f);
-	DONE_ROBOT
+	DONE
 	
 	fwrite(&s->n_bullets, sizeof(u32), 1, f);
-	FOREACH_BULLET(i)
+	FOREACH(s->, bullets, i)
 		fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
-	DONE_BULLET
+	DONE
 	
 	fflush(f);
 }
@@ -393,8 +273,9 @@ void Server_Loop(Server* s)
 			deg2rad(random() % 360),
 			0, 100.0, 0, 0, 0
 		};
-		// don't merge the two next lines: enableRobot maybe change s->robots pointer
-		u32 id = enableRobot(s);    assert(i == id); // TODO
+		// don't merge the next lines: ENABLE may change s->robots pointer
+		u32 id;
+		ENABLE(s->, Robot, robots, id);    assert(i == id); // TODO
 		Robot* r = &s->robots[id];
 		memcpy(r, &nr, sizeof(Robot));
 		write(s->client[i], r, sizeof(Robot));

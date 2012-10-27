@@ -26,6 +26,7 @@
 
 #include "socket.h"
 #include "game.h"
+#include "allocateArray.h"
 
 #define GLUT_KEY_ESC    (27)
 #define GLUT_WHEEL_UP   (3)
@@ -46,29 +47,35 @@ typedef enum
 	TEX_NB,
 } Texture;
 
-const char* tex_name  [TEX_NB] = { "img/grass.png", "img/chassis.png", "img/gun.png", "img/explosion.png" };
-int         texture   [TEX_NB];
-int         tex_width [TEX_NB];
-int         tex_height[TEX_NB];
+static const char* tex_name  [TEX_NB] =
+{
+	"img/grass.png",
+	"img/chassis.png",
+	"img/gun.png",
+	"img/explosion.png",
+};
+static int         texture   [TEX_NB];
+static int         tex_width [TEX_NB];
+static int         tex_height[TEX_NB];
 
-int   winId;
-int   winWidth  = 1024;
-int   winHeight = 768;
-int   mouseX    = 0;
-int   mouseY    = 0;
-float zoom      = 1;
+static int   winId;
+static int   winWidth  = 1024;
+static int   winHeight = 768;
+static int   mouseX    = 0;
+static int   mouseY    = 0;
+static float zoom      = 1;
 
-struct timeb lastDraw;
-s32     server;
-Game    game;
-u32     n_robots     = 0;
-u32     a_robots     = 0;
-Robot*  robots       = NULL;
-u32     n_bullets    = 0;
-u32     a_bullets    = 0;
-Bullet* bullet       = NULL;
+static struct timeb lastDraw;
+static s32     server;
+static Game    game;
+static u32     n_robots     = 0;
+static u32     a_robots     = 0;
+static Robot*  robots       = NULL;
+static u32     n_bullets    = 0;
+static u32     a_bullets    = 0;
+static Bullet* bullet       = NULL;
 
-#define EXPLOSION_DURATION (1.0f)
+#define EXPLOSION_DURATION (2.0f)
 typedef struct
 {
 	float x;
@@ -76,66 +83,7 @@ typedef struct
 	float curTime;
 	float radius;
 } Explosion;
-u32        n_explosions      = 0;
-u32        a_explosions      = 0;
-u32*       active_explosions = NULL;
-Explosion* explosions        = NULL;
-#define FOREACH_EXPLOSION(I)                                                \
-	{                                                                   \
-		u32 I = 0;                                                  \
-		for (u32 I##32 = 0; I##32 < a_explosions / 32 ; I##32++) \
-		{                                                           \
-			u32 bitfield = active_explosions[I##32];         \
-			for (u32 I##b = 0; I##b < 32; I++, I##b++)          \
-			{                                                   \
-				if (bitfield % 2)                           \
-				{
-//					code (explosions[I] are active)
-#define DONE_EXPLOSION                                                      \
-				}                                           \
-				bitfield >>= 1;                             \
-			}                                                   \
-		}                                                           \
-	}
-
-static inline u32 enableExplosion()
-{
-	if (n_explosions >= a_explosions)
-	{
-		if (a_explosions)
-		{
-			a_explosions *= 2;
-			active_explosions = REALLOC(active_explosions, u32, a_explosions / 32);
-			memset(&active_explosions[a_explosions/32/2], 0, a_explosions/32*sizeof(u32)/2);
-		}
-		else
-		{
-			a_explosions = 32;
-			active_explosions = REALLOC(active_explosions, u32, a_explosions / 32);
-			memset(active_explosions, 0, a_explosions/32*sizeof(u32));
-		}
-		explosions = REALLOC(explosions, Explosion, a_explosions);
-	}
-	u32 i32 = 0;
-	while (active_explosions[i32] == (u32)-1)
-		i32++;
-	u32 bitfield = active_explosions[i32];
-	u32 i = i32 * 32;
-	while (bitfield % 2)
-	{
-		i++;
-		bitfield >>= 1;
-	}
-	active_explosions[i/32] |= (1 << (i%32));
-	n_explosions++;
-	
-	return i;
-}
-static inline void disableExplosion(u32 i)
-{
-	active_explosions[i/32] ^= (1 << (i%32));
-	n_explosions--;
-}
+DEF(Explosion, explosions)
 
 void drawTexture(Texture tex, float width, float height)
 {
@@ -232,11 +180,11 @@ void cb_displayFunc()
 		drawTexture(TEX_GROUND, game.width, game.height);
 	glPopMatrix();
 
-	FOREACH_EXPLOSION(i)
+	FOREACH(, explosions, i)
 		drawExplosion(i);
 		if ((explosions[i].curTime += elapsed) >= EXPLOSION_DURATION)
-			disableExplosion(i);
-	DONE_EXPLOSION
+			DISABLE(, explosions, i);
+	DONE
 
 	for (u32 i = 0; i < n_robots; i++)
 		drawRobot(&robots[i]);
@@ -282,7 +230,8 @@ void cb_idleFunc()
 		break;
 	case E_KABOUM:
 		read(server, &r, sizeof(Robot));
-		u32 i = enableExplosion();
+		u32 i;
+		ENABLE(, Explosion, explosions, i);
 		Explosion* e = &explosions[i];
 		e->x       = r.x;
 		e->y       = r.y;
@@ -398,12 +347,13 @@ int main(int argc, char** argv)
 	glutMotionFunc       (&cb_motionFunc);
 	glutPassiveMotionFunc(&cb_passiveMotionFunc);
 
+	INIT(, explosions);
 	ftime(&lastDraw);
+
 	glInit();
 	glutMainLoop();
 
-	free(active_explosions);
-	free(explosions);
+	FREE(, explosions);
 	free(bullet);
 	free(robots);
 	close(server);

@@ -20,6 +20,7 @@
 #define SERVER_C
 
 #include "game.h"
+#include "allocateArray.h"
 
 typedef struct
 {
@@ -30,15 +31,8 @@ typedef struct
 
 	Game    game;
 
-	Robot*  robots;
-	u32*    active_robots;
-	u32     n_robots;
-	u32     a_robots;
-
-	Bullet* bullets;
-	u32*    active_bullets;
-	u32     n_bullets;
-	u32     a_bullets;
+	DEF(Robot,  robots)
+	DEF(Bullet, bullets)
 } Server;
 
 Server* Server_New          (string, u16, u32);
