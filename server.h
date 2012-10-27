@@ -31,6 +31,7 @@ typedef struct
 	Game    game;
 
 	Robot*  robots;
+	u32*    active_robots;
 	u32     n_robots;
 	u32     a_robots;
 
