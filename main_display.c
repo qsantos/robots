@@ -21,6 +21,8 @@
 #include <fcntl.h>
 #include <SOIL/SOIL.h>
 #include <unistd.h>
+#include <sys/timeb.h>
+#include <string.h>
 
 #include "socket.h"
 #include "game.h"
@@ -35,44 +37,115 @@ static inline float max(float a, float b)
 }
 
 // texture information
-enum
+typedef enum
 {
 	TEX_GROUND,
 	TEX_CHASSIS,
 	TEX_GUN,
-	TEX_NB
-};
-const char* tex_name  [TEX_NB] = { "img/grass.png", "img/chassis.png", "img/gun.png" };
+	TEX_EXPLOSION,
+	TEX_NB,
+} Texture;
+
+const char* tex_name  [TEX_NB] = { "img/grass.png", "img/chassis.png", "img/gun.png", "img/explosion.png" };
 int         texture   [TEX_NB];
 int         tex_width [TEX_NB];
 int         tex_height[TEX_NB];
 
-int winId;
-int winWidth  = 1024;
-int winHeight = 768;
-int mouseX    = 0;
-int mouseY    = 0;
-float zoom    = 1;
+int   winId;
+int   winWidth  = 1024;
+int   winHeight = 768;
+int   mouseX    = 0;
+int   mouseY    = 0;
+float zoom      = 1;
 
+struct timeb lastDraw;
 s32     server;
-
 Game    game;
-u32     n_robots  = 0;
-u32     a_robots  = 0;
-Robot*  robot     = NULL;
-u32     n_bullets = 0;
-u32     a_bullets = 0;
-Bullet* bullet    = NULL;
+u32     n_robots     = 0;
+u32     a_robots     = 0;
+Robot*  robots       = NULL;
+u32     n_bullets    = 0;
+u32     a_bullets    = 0;
+Bullet* bullet       = NULL;
 
-void drawTexture(u32 tex, float width, float height)
+#define EXPLOSION_DURATION (1.0f)
+typedef struct
+{
+	float x;
+	float y;
+	float curTime;
+	float radius;
+} Explosion;
+u32        n_explosions      = 0;
+u32        a_explosions      = 0;
+u32*       active_explosions = NULL;
+Explosion* explosions        = NULL;
+#define FOREACH_EXPLOSION(I)                                                \
+	{                                                                   \
+		u32 I = 0;                                                  \
+		for (u32 I##32 = 0; I##32 < a_explosions / 32 ; I##32++) \
+		{                                                           \
+			u32 bitfield = active_explosions[I##32];         \
+			for (u32 I##b = 0; I##b < 32; I++, I##b++)          \
+			{                                                   \
+				if (bitfield % 2)                           \
+				{
+//					code (explosions[I] are active)
+#define DONE_EXPLOSION                                                      \
+				}                                           \
+				bitfield >>= 1;                             \
+			}                                                   \
+		}                                                           \
+	}
+
+static inline u32 enableExplosion()
+{
+	if (n_explosions >= a_explosions)
+	{
+		if (a_explosions)
+		{
+			a_explosions *= 2;
+			active_explosions = REALLOC(active_explosions, u32, a_explosions / 32);
+			memset(&active_explosions[a_explosions/32/2], 0, a_explosions/32*sizeof(u32)/2);
+		}
+		else
+		{
+			a_explosions = 32;
+			active_explosions = REALLOC(active_explosions, u32, a_explosions / 32);
+			memset(active_explosions, 0, a_explosions/32*sizeof(u32));
+		}
+		explosions = REALLOC(explosions, Explosion, a_explosions);
+	}
+	u32 i32 = 0;
+	while (active_explosions[i32] == (u32)-1)
+		i32++;
+	u32 bitfield = active_explosions[i32];
+	u32 i = i32 * 32;
+	while (bitfield % 2)
+	{
+		i++;
+		bitfield >>= 1;
+	}
+	active_explosions[i/32] |= (1 << (i%32));
+	n_explosions++;
+	
+	return i;
+}
+static inline void disableExplosion(u32 i)
+{
+	active_explosions[i/32] ^= (1 << (i%32));
+	n_explosions--;
+}
+
+void drawTexture(Texture tex, float width, float height)
 {
 	glBindTexture(GL_TEXTURE_2D, texture[tex]);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 1.0); glVertex2f(- width / 2, - height / 2);
-	glTexCoord2f(1.0, 1.0); glVertex2f(  width / 2, - height / 2);
-	glTexCoord2f(1.0, 0.0); glVertex2f(  width / 2,   height / 2);
-	glTexCoord2f(0.0, 0.0); glVertex2f(- width / 2,   height / 2);
-	glEnd();
+		glBegin(GL_QUADS);
+			glTexCoord2f(0.0, 1.0); glVertex2f(- width / 2, - height / 2);
+			glTexCoord2f(1.0, 1.0); glVertex2f(  width / 2, - height / 2);
+			glTexCoord2f(1.0, 0.0); glVertex2f(  width / 2,   height / 2);
+			glTexCoord2f(0.0, 0.0); glVertex2f(- width / 2,   height / 2);
+		glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 #define TEXT_BUFFER (1024)
@@ -82,7 +155,7 @@ void drawRobot(Robot* r)
 	assert(r);
 
 	glPushMatrix();
-		glTranslated(r->x, r->y, 0);
+		glTranslatef(r->x, r->y, 0);
 		glRotatef(rad2deg(r->angle), 0.0, 0.0, 1.0);
 		drawTexture(TEX_CHASSIS, r->width, r->height);
 		glPushMatrix();
@@ -110,6 +183,26 @@ void drawRobot(Robot* r)
 
 }
 
+void drawExplosion(u32 i)
+{
+	Explosion* e = &explosions[i];
+	u32 step = (u32)(16 * e->curTime / EXPLOSION_DURATION);
+	u32 row = 3 - (step / 4);
+	u32 col = step % 4;
+	glPushMatrix();
+		glTranslatef(e->x, e->y, 0);
+		glBindTexture(GL_TEXTURE_2D, texture[TEX_EXPLOSION]);
+			glBegin(GL_QUADS);
+#define W (1.0/4.0)
+				glTexCoord2f(W*col,     W*(row+1)); glVertex2f(- e->radius, - e->radius);
+				glTexCoord2f(W*(col+1), W*(row+1)); glVertex2f(  e->radius, - e->radius);
+				glTexCoord2f(W*(col+1), W*row);     glVertex2f(  e->radius,   e->radius);
+				glTexCoord2f(W*col,     W*row);     glVertex2f(- e->radius,   e->radius);
+			glEnd();
+		glBindTexture(GL_TEXTURE_2D, 0);
+	glPopMatrix();
+}
+
 void drawBullet(Bullet* b)
 {
 	assert(b);
@@ -122,6 +215,11 @@ void drawBullet(Bullet* b)
 
 void cb_displayFunc()
 {
+	struct timeb cur;
+	ftime(&cur);
+	float elapsed = (cur.time-lastDraw.time) + ((float)(cur.millitm-lastDraw.millitm)/1000);
+	lastDraw = cur;
+	
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPushMatrix();
 	glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
@@ -134,8 +232,14 @@ void cb_displayFunc()
 		drawTexture(TEX_GROUND, game.width, game.height);
 	glPopMatrix();
 
+	FOREACH_EXPLOSION(i)
+		drawExplosion(i);
+		if ((explosions[i].curTime += elapsed) >= EXPLOSION_DURATION)
+			disableExplosion(i);
+	DONE_EXPLOSION
+
 	for (u32 i = 0; i < n_robots; i++)
-		drawRobot(&robot[i]);
+		drawRobot(&robots[i]);
 
 	for (u32 i = 0; i < n_bullets; i++)
 		drawBullet(&bullet[i]);
@@ -150,31 +254,40 @@ void cb_idleFunc()
 	u8 eventCode;
 	if (read(server, &eventCode, sizeof(u8)) <= 0) return;
 	
+	Robot r;
 	switch (eventCode)
 	{
 	case E_DUMP:
-		if (read(server, &game, sizeof(Game)) <= 0) return;
+		read(server, &game, sizeof(Game));
 
 		u32 nn_robots;
-		if (read(server, &nn_robots, sizeof(u32)) <= 0) return;
+		read(server, &nn_robots, sizeof(u32));
 		if (nn_robots > a_robots)
 		{
 			a_robots = nn_robots;
-			robot = REALLOC(robot, Robot, a_robots);
+			robots = REALLOC(robots, Robot, a_robots);
 		}
 		n_robots = nn_robots;
-		if (n_robots && read(server, robot, sizeof(Robot) * n_robots) <= 0) return;
+		read(server, robots, sizeof(Robot) * n_robots);
 
 		u32 nn_bullets;
-		if (read(server, &nn_bullets, sizeof(u32)) <= 0) return;
+		read(server, &nn_bullets, sizeof(u32));
 		if (nn_bullets > a_bullets)
 		{
 			a_bullets = nn_bullets;
 			bullet = REALLOC(bullet, Bullet, a_bullets);
 		}
 		n_bullets = nn_bullets;
-		if (n_bullets && read(server, bullet, sizeof(Bullet) * n_bullets) <= 0) return;
+		read(server, bullet, sizeof(Bullet) * n_bullets);
 		break;
+	case E_KABOUM:
+		read(server, &r, sizeof(Robot));
+		u32 i = enableExplosion();
+		Explosion* e = &explosions[i];
+		e->x       = r.x;
+		e->y       = r.y;
+		e->curTime = 0;
+		e->radius  = (r.width + r.height) / 4;
 	}
 }
 
@@ -285,11 +398,14 @@ int main(int argc, char** argv)
 	glutMotionFunc       (&cb_motionFunc);
 	glutPassiveMotionFunc(&cb_passiveMotionFunc);
 
+	ftime(&lastDraw);
 	glInit();
 	glutMainLoop();
 
+	free(active_explosions);
+	free(explosions);
 	free(bullet);
-	free(robot);
+	free(robots);
 	close(server);
 	return 0;
 }

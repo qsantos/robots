@@ -78,7 +78,7 @@ static inline u32 enableRobot(Server* s)
 		{
 			s->a_robots = 32;
 			s->active_robots = REALLOC(s->active_robots, u32, s->a_robots / 32);
-			memset(s->active_robots, 0, s->a_robots/32/sizeof(u32));
+			memset(s->active_robots, 0, s->a_robots/32*sizeof(u32));
 		}
 		s->robots = REALLOC(s->robots, Robot, s->a_robots);
 	}
@@ -117,7 +117,7 @@ static inline u32 enableBullet(Server* s)
 		{
 			s->a_bullets = 32;
 			s->active_bullets = REALLOC(s->active_bullets, u32, s->a_bullets / 32);
-			memset(s->active_bullets, 0, s->a_bullets/32/sizeof(u32));
+			memset(s->active_bullets, 0, s->a_bullets/32*sizeof(u32));
 		}
 		s->bullets = REALLOC(s->bullets, Bullet, s->a_bullets);
 	}
