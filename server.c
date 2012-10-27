@@ -141,6 +141,20 @@ static inline void disableBullet(Server* s, u32 i)
 	s->n_bullets--;
 }
 
+static inline void decreaseEnergy(Server* s, u32 i, float amount)
+{
+	s->robots[i].energy -= amount;
+	if (s->robots[i].energy < 0)
+	{
+		static const u8 event_code = E_KABOUM;
+		fwrite(&event_code,   sizeof(u8),    1, s->display_fh);
+		fwrite(&s->robots[i], sizeof(Robot), 1, s->display_fh);
+		fflush(s->display_fh);
+		// TODO: send to robots
+		disableRobot(s, i);
+	}
+}
+
 Server* Server_New(string interface, u16 port, u32 n_clients)
 {
 	Server* ret = ALLOC(Server, 1);
@@ -318,7 +332,7 @@ void Server_Tick(Server* s, float time)
 				if (RobotCollidePoint(&s->robots[k], b->x, b->y))
 				{
 					s->robots[b->from].energy += b->energy * 1.5;
-					s->robots[k]      .energy -= b->energy;
+					decreaseEnergy(s, k, b->energy);
 					disableBullet(s, i);
 					break;
 				}
@@ -331,15 +345,16 @@ void Server_Dump(Server* s, FILE* f)
 	assert(f);
 
 	static const u8 eventCode = E_DUMP;
-	fwrite(&eventCode,    sizeof(u8),     1,           f);
-	fwrite(&s->game,      sizeof(Game),   1,           f);
-	fwrite(&s->n_robots,  sizeof(u32),    1,           f);
-	fwrite(s->robots,     sizeof(Robot),  s->n_robots, f);
-	fwrite(&s->n_bullets, sizeof(u32),    1,           f);
+	fwrite(&eventCode,    sizeof(u8),   1, f);
+	fwrite(&s->game,      sizeof(Game), 1, f);
 	
-	u32 tmp = 0;
+	fwrite(&s->n_robots,  sizeof(u32), 1, f);
+	FOREACH_ROBOT
+		fwrite(&s->robots[i], sizeof(Robot), 1, f);
+	DONE_ROBOT
+	
+	fwrite(&s->n_bullets, sizeof(u32), 1, f);
 	FOREACH_BULLET
-		tmp++;
 		fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
 	DONE_BULLET
 	
