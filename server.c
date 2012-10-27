@@ -29,38 +29,38 @@
 #include "socket.h"
 
 
-#define FOREACH_ROBOT                                                \
-	{                                                            \
-		u32 i = 0;                                           \
-		for (u32 i32 = 0; i32 < s->a_robots / 32 ; i32++)   \
-		{                                                    \
-			u32 bitfield = s->active_robots[i32];       \
-			for (u32 j = 0; j < 32; i++, j++)            \
-			{                                            \
-				if (bitfield % 2)                    \
+#define FOREACH_ROBOT(I)                                                \
+	{                                                               \
+		u32 I = 0;                                              \
+		for (u32 I##32 = 0; I##32 < s->a_robots / 32 ; I##32++) \
+		{                                                       \
+			u32 bitfield = s->active_robots[I##32];         \
+			for (u32 I##b = 0; I##b < 32; I++, I##b++)      \
+			{                                               \
+				if (bitfield % 2)                       \
 				{
-#define DONE_ROBOT                                                   \
-				}                                    \
-				bitfield >>= 1;                      \
-			}                                            \
-		}                                                    \
+#define DONE_ROBOT                                                      \
+				}                                       \
+				bitfield >>= 1;                         \
+			}                                               \
+		}                                                       \
 	}
 
-#define FOREACH_BULLET                                               \
-	{                                                            \
-		u32 i = 0;                                           \
-		for (u32 i32 = 0; i32 < s->a_bullets / 32 ; i32++)   \
-		{                                                    \
-			u32 bitfield = s->active_bullets[i32];       \
-			for (u32 j = 0; j < 32; i++, j++)            \
-			{                                            \
-				if (bitfield % 2)                    \
+#define FOREACH_BULLET(I)                                                \
+	{                                                                \
+		u32 I = 0;                                               \
+		for (u32 I##32 = 0; I##32 < s->a_bullets / 32 ; I##32++) \
+		{                                                        \
+			u32 bitfield = s->active_bullets[I##32];         \
+			for (u32 I##b = 0; I##b < 32; I++, I##b++)       \
+			{                                                \
+				if (bitfield % 2)                        \
 				{
-#define DONE_BULLET                                                  \
-				}                                    \
-				bitfield >>= 1;                      \
-			}                                            \
-		}                                                    \
+#define DONE_BULLET                                                      \
+				}                                        \
+				bitfield >>= 1;                          \
+			}                                                \
+		}                                                        \
 	}
  
 static inline u32 enableRobot(Server* s)
@@ -210,14 +210,14 @@ void Server_Debug(Server* s)
 
 	printf("==================================\n");
 	printf("Robots:\n");
-	FOREACH_ROBOT
+	FOREACH_ROBOT(i)
 		Robot r = s->robots[i];
 		printf("#%lu: (%f, %f) %f° %f° %f\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
 	DONE_ROBOT
 	printf("\n");
 
 	printf("Bullets:\n");
-	FOREACH_BULLET
+	FOREACH_BULLET(i)
 		Bullet* b = &s->bullets[i];
 		printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, b->angle, b->energy);
 	DONE_BULLET
@@ -296,7 +296,7 @@ void Server_Tick(Server* s, float time)
 {
 	assert(s);
 
-	FOREACH_ROBOT
+	FOREACH_ROBOT(i)
 		Robot* r = &s->robots[i];
 		r->gunAngle += deg2rad(time * r->turnGunSpeed);
 		if (r->velocity || r->turnSpeed)
@@ -321,21 +321,22 @@ void Server_Tick(Server* s, float time)
 		}
 	DONE_ROBOT
 
-	FOREACH_BULLET
+	FOREACH_BULLET(i)
 		Bullet* b = &s->bullets[i];
 		b->x += time * 100 * sin(b->angle);
 		b->y -= time * 100 * cos(b->angle);
 		if (!GameContainsPoint(&s->game, b->x, b->y))
 			disableBullet(s, i);
 		else
-			for (u32 k = 0; k < s->n_robots; k++)
-				if (RobotCollidePoint(&s->robots[k], b->x, b->y))
+			FOREACH_ROBOT(j)
+				if (RobotCollidePoint(&s->robots[j], b->x, b->y))
 				{
 					s->robots[b->from].energy += b->energy * 1.5;
-					decreaseEnergy(s, k, b->energy);
+					decreaseEnergy(s, j, b->energy);
 					disableBullet(s, i);
 					break;
 				}
+			DONE_ROBOT
 	DONE_BULLET
 }
 
@@ -349,12 +350,12 @@ void Server_Dump(Server* s, FILE* f)
 	fwrite(&s->game,      sizeof(Game), 1, f);
 	
 	fwrite(&s->n_robots,  sizeof(u32), 1, f);
-	FOREACH_ROBOT
+	FOREACH_ROBOT(i)
 		fwrite(&s->robots[i], sizeof(Robot), 1, f);
 	DONE_ROBOT
 	
 	fwrite(&s->n_bullets, sizeof(u32), 1, f);
-	FOREACH_BULLET
+	FOREACH_BULLET(i)
 		fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
 	DONE_BULLET
 	
