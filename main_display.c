@@ -147,27 +147,35 @@ void cb_displayFunc()
 
 void cb_idleFunc()
 {
-	if (read(server, &game, sizeof(Game)) <= 0) return;
-
-	u32 nn_robots;
-	if (read(server, &nn_robots, sizeof(u32)) <= 0) return;
-	if (nn_robots > a_robots)
+	u8 eventCode;
+	if (read(server, &eventCode, sizeof(u8)) <= 0) return;
+	
+	switch (eventCode)
 	{
-		a_robots = nn_robots;
-		robot = REALLOC(robot, Robot, a_robots);
-	}
-	n_robots = nn_robots;
-	if (n_robots && read(server, robot, sizeof(Robot) * n_robots) <= 0) return;
+	case E_DUMP:
+		if (read(server, &game, sizeof(Game)) <= 0) return;
 
-	u32 nn_bullets;
-	if (read(server, &nn_bullets, sizeof(u32)) <= 0) return;
-	if (nn_bullets > a_bullets)
-	{
-		a_bullets = nn_bullets;
-		bullet = REALLOC(bullet, Bullet, a_bullets);
+		u32 nn_robots;
+		if (read(server, &nn_robots, sizeof(u32)) <= 0) return;
+		if (nn_robots > a_robots)
+		{
+			a_robots = nn_robots;
+			robot = REALLOC(robot, Robot, a_robots);
+		}
+		n_robots = nn_robots;
+		if (n_robots && read(server, robot, sizeof(Robot) * n_robots) <= 0) return;
+
+		u32 nn_bullets;
+		if (read(server, &nn_bullets, sizeof(u32)) <= 0) return;
+		if (nn_bullets > a_bullets)
+		{
+			a_bullets = nn_bullets;
+			bullet = REALLOC(bullet, Bullet, a_bullets);
+		}
+		n_bullets = nn_bullets;
+		if (n_bullets && read(server, bullet, sizeof(Bullet) * n_bullets) <= 0) return;
+		break;
 	}
-	n_bullets = nn_bullets;
-	if (n_bullets && read(server, bullet, sizeof(Bullet) * n_bullets) <= 0) return;
 }
 
 void cb_mouseFunc(int button, int state, int x, int y)
@@ -266,8 +274,6 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Could not connect to the server\n");
 		abort();
 	}
-//  int flags = fcntl(server, F_GETFL, 0);
-//  fcntl(server, F_SETFL, flags | O_NONBLOCK);
 
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);

@@ -23,13 +23,29 @@
 
 #define FRAMERATE 60
 
+static const u8 MAGIC_WORD     = 0x42;
+static const u8 VERSION_NUMBER = 0x01;
+static const u8 START_MESSAGE  = 0x42;
+
 typedef enum
 {
-	ADVANCE = 1,
-	TURN    = 2,
-	TURNGUN = 3,
-	FIRE    = 4,
+	O_ADVANCE = 0x01,
+	O_TURN    = 0x02,
+	O_TURNGUN = 0x03,
+	O_FIRE    = 0x04,
 } OrderCode;
+
+typedef enum
+{
+	E_TICK     = 0x00,
+	E_DUMP     = 0x01,
+	E_SPOT     = 0x02,
+	E_BULLET   = 0x03,
+	E_HIT      = 0x04,
+	E_HITBY    = 0x05,
+	E_HITROBOT = 0x06,
+	E_HITWALL  = 0x07,
+} EventCode;
 
 typedef struct PACKED
 {

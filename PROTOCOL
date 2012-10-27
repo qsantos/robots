@@ -1,18 +1,4 @@
-==== DISPLAY DUMPING ====
-
-Whenever the server find it cool, it proceeds to dump game information to the display client with following order:
-
-Server> Game
-Server> n_robots  (uint32)
-Server> Robot     (n_robots items)
-Server> n_bullets (uint32)
-Server> Bullet    (n_bullet items)
-
-
-
-
-
-==== ROBOT INTELLIGCENCE COMMUNICATION ====
+==== BEFORE GAME START ====
 
 === Connection and waiting phase ===
 
@@ -47,66 +33,151 @@ In other words, the server send the new number of currently connected clients to
 
 
 
-
 === Initialization phase ===
 
 When n_clients reaches n_slots, the game is settled and the server sends to each client the initial state of its robot:
 
-Server > Robot (sea Robot information)
+Server> Robot (sea Robot information)
 
 When the game is ready to start, the server sends the start message (0x42) to every client:
 
-Server > 0x42
+Server> 0x42
 
 From now on, the servers only sends data for in-game events concerning the client, and the clients only sends data for client's robot orders.
 
 
 
 
-=== Game phase ===
+==== ORDERS ====
 
-== Orders ==
+An order is a message which is sent by a robot to the server whenever he wants. Currently, every order takes exactly one 4-byte (float) parameter. Here is a list of order codes:
 
-= Movement =
+ADVANCE 0x01
+TURN    0x02
+TURNGUN 0x03
+FIRE    0x04
+
+
+== Moves ==
 
 The movement orders are ADVANCE (0x01), TURN (0x02) and TURNGUN (0x03). They actually sets the (may be negative) at which the robot moves forward, turn to the right, or turn its gun to the right. The parameter is the desired speed.
 
-Client > COMMAND
-Client > speed   (float)
+Client> COMMAND
+Client> speed   (float)
 
 
-= FIRE =
+== FIRE (0x04) ==
 
 This makes the robot to fire a bullet of energy immediatly. The parameter is the desired amount of energy in the bullet:
 
-Client > 0x04
-Client > energy (float)
+Client> 0x04
+Client> energy (float)
 
 
 
-== Events ==
 
-= TICK =
+==== EVENTS ====
+
+An events is a message which is sent by the server to both the display and the concerned robots, at some moment in the simulation. Here is a list of event codes:
+
+TICK     0x01
+DUMP     0x02
+SPOT     0x03
+BULLET   0x05
+HIT      0x05
+HITBY    0x06
+HITROBOT 0x07
+HITWALL  0x08
+
+Except for TICK and DUMP, when the server sends the display event information, it first sends the identifier of the robot which produced the event. It is to say:
+
+Server> event_code  (uint8)
+Server> robot_id    (uint8)
+Server> event_param (?)
+
+In the following descriptions, the second line will be omitted (as if it were robot communication).
+
+
+== TICK (0x01) ==
+Robots: all
 
 A tick is the atomic unit of time in a game. At every tick, the server broadcast a tick event:
 
-Server > 0x01
+Server> 0x01
+
+== DUMP (0x02) ==
+Robots: none (but Chuck Norris's one)
+
+When the server thinks the display should get a new dump of the game's data, it send everything to it:
+
+Server> 0x02
+Server> Game
+Server> n_robots  (uint32)
+Server> Robot     (n_robots items) (see Robot information)
+Server> n_bullets (uint32)
+Server> Bullet    (n_bullet items) (see Bullet information)
+
+where 'n_robots' (respectively 'n_bullets') is the total number of active robots (bullets) still in the game.
 
 
-= SPOTTED =
+== SPOT (0x03) ==
+Robots: the robot which spotted his foe
 
-Whenever another robot is in sight, the client gets this event:
+Whenever another robot is in sight, the client gets the event:
 
-Server > 0x02
-Server > Robot (see Robot information)
-
-
-= HIT =
+Server> 0x03
+Server> Robot (see Robot information)
 
 
-= HITBY =
+== BULLET (0x04) ==
+Robots: the robot which spotted the threat
 
-= COLLIDE =
+Whenever a bullet is in sight (even if not in one's direction), one gets:
+
+Server> 0x04
+Server> Bullet (see Bullet information)
+
+
+== HIT (0x05) ==
+Robots: the robot which fired the hitting bullet
+
+Whenever bullet fired by the robot hits a target, the folowing event occurs:
+
+Server> 0x05
+Server> robot_id (uint32)
+
+where 'robot_id' is the identifier of the robot which was hit.
+
+
+== HITBY (0x06) ==
+Robots: the robot the bullet hit
+
+Whenever the robot is hit by a bullet, it gets:
+
+Server> 0x06
+Server> robot_id (uint32)
+
+where 'robot_id' is the identifier of the robot which fired the bullet.
+
+
+== HITROBOT (0x07) ==
+Robots: the robots which were involved in the collision
+
+Whenever two robots collide, each gets the following information:
+
+Server> 0x07
+Server> robot_id (uint32)
+
+Where 'robot_id' is the identifier of the other robot involved.
+
+
+== HITWALL (0x08) ==
+Robots: the clumsy robot
+
+Whenever a robot tries to get out of the map and is stopped by basic physics, it gets:
+
+Server> 0x08
+
 
 
 
@@ -120,6 +191,7 @@ General information about the game are sent following the scheme:
 > height    (float)
 > n_slots   (uint32)
 > n_clients (uint32)
+
 
 == Robot information ==
 

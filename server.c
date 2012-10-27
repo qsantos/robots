@@ -28,9 +28,6 @@
 
 #include "socket.h"
 
-const u8 MAGIC_WORD     = 0x42;
-const u8 VERSION_NUMBER = 0x01;
-const u8 START_MESSAGE  = 0x42;
 
 #define FOREACH_BULLET                                               \
 	{                                                            \
@@ -195,19 +192,19 @@ bool Server_HandleOrder(Server* s, u32 id)
 	u32 i;
 	switch (order.code)
 	{
-	case ADVANCE:
+	case O_ADVANCE:
 		r->velocity = order.param;
 		break;
 
-	case TURN:
+	case O_TURN:
 		r->turnSpeed = order.param;
 		break;
 
-	case TURNGUN:
+	case O_TURNGUN:
 		r->turnGunSpeed = order.param;
 		break;
 
-	case FIRE:
+	case O_FIRE:
 		// don't merge the two next lines: enableBullet may change s->bullets pointer
 		i = enableBullet(s);
 		b = &(s->bullets[i]);
@@ -274,6 +271,8 @@ void Server_Dump(Server* s, FILE* f)
 	assert(s);
 	assert(f);
 
+	static const u8 eventCode = E_DUMP;
+	fwrite(&eventCode,    sizeof(u8),     1,           f);
 	fwrite(&s->game,      sizeof(Game),   1,           f);
 	fwrite(&s->n_robots,  sizeof(u32),    1,           f);
 	fwrite(s->robots,     sizeof(Robot),  s->n_robots, f);

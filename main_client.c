@@ -22,10 +22,6 @@
 #include "socket.h"
 #include "game.h"
 
-const u8 MAGIC_WORD     = 0x42;
-const u8 VERSION_NUMBER = 0x01;
-const u8 START_MESSAGE  = 0x42;
-
 s32 server = 0;
 #define ORDER(Name, CODE)                   \
 void Order_##Name(float param)              \
@@ -35,10 +31,10 @@ void Order_##Name(float param)              \
 	write(server, &order, sizeof(Order));     \
 }
 
-ORDER(Advance, ADVANCE)
-ORDER(Turn,    TURN   )
-ORDER(TurnGun, TURNGUN)
-ORDER(Fire,    FIRE   )
+ORDER(Advance, O_ADVANCE)
+ORDER(Turn,    O_TURN   )
+ORDER(TurnGun, O_TURNGUN)
+ORDER(Fire,    O_FIRE   )
 
 int main(int argc, char** argv)
 {
