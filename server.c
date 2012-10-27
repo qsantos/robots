@@ -245,8 +245,6 @@ bool Server_HandleOrder(Server* s, u32 id)
 		return false;
 
 	Robot* r = &s->robots[id];
-	Bullet* b;
-	u32 i;
 	switch (order.code)
 	{
 	case O_ADVANCE:
@@ -263,13 +261,17 @@ bool Server_HandleOrder(Server* s, u32 id)
 
 	case O_FIRE:
 		// don't merge the two next lines: enableBullet may change s->bullets pointer
-		i = enableBullet(s);
-		b = &s->bullets[i];
-		b->from   = r->id;
-		b->angle  = r->angle + r->gunAngle;
-		b->x      = r->x + 100 * sin(b->angle);
-		b->y      = r->y - 100 * cos(b->angle);
-		b->energy = order.param;
+		if (r->energy >= order.param)
+		{
+			r->energy -= order.param;
+			u32 i = enableBullet(s);
+			Bullet* b = &s->bullets[i];
+			b->from    = r->id;
+			b->angle   = r->angle + r->gunAngle;
+			b->x       = r->x + 100 * sin(b->angle);
+			b->y       = r->y - 100 * cos(b->angle);
+			b->energy  = order.param;
+		}
 		break;
 	}
 
@@ -315,7 +317,7 @@ void Server_Tick(Server* s, float time)
 			for (u32 k = 0; k < s->n_robots; k++)
 				if (RobotCollidePoint(&s->robots[k], b->x, b->y))
 				{
-					s->robots[b->from].energy += b->energy * 0.5;
+					s->robots[b->from].energy += b->energy * 1.5;
 					s->robots[k]      .energy -= b->energy;
 					disableBullet(s, i);
 					break;
