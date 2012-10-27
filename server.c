@@ -235,6 +235,8 @@ void Server_AcceptDisplay(Server* s)
 
 void Server_AcceptClients(Server* s)
 {
+	assert(s);
+
 	for (u32 i = 0; i < s->game.n_slots; i++)
 	{
 		s->client[i] = TCP_Accept(s->listener);
