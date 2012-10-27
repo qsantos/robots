@@ -37,14 +37,15 @@ typedef enum
 
 typedef enum
 {
-	E_TICK     = 0x00,
-	E_DUMP     = 0x01,
-	E_SPOT     = 0x02,
-	E_BULLET   = 0x03,
-	E_HIT      = 0x04,
-	E_HITBY    = 0x05,
-	E_HITROBOT = 0x06,
-	E_HITWALL  = 0x07,
+	E_TICK     = 0x01,
+	E_DUMP     = 0x02,
+	E_SPOT     = 0x03,
+	E_BULLET   = 0x04,
+	E_HIT      = 0x05,
+	E_HITBY    = 0x06,
+	E_HITROBOT = 0x07,
+	E_HITWALL  = 0x08,
+	E_KABOUM   = 0x09,
 } EventCode;
 
 typedef struct PACKED

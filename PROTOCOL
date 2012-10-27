@@ -83,13 +83,14 @@ An events is a message which is sent by the server to both the display and the c
 TICK     0x01
 DUMP     0x02
 SPOT     0x03
-BULLET   0x05
+BULLET   0x04
 HIT      0x05
 HITBY    0x06
 HITROBOT 0x07
 HITWALL  0x08
+KABOUM   0x09
 
-Except for TICK and DUMP, when the server sends the display event information, it first sends the identifier of the robot which produced the event. It is to say:
+Except for TICK, DUMP and KABOUM, when the server sends the display event information, it first sends the identifier of the robot which produced the event. It is to say:
 
 Server> event_code  (uint8)
 Server> robot_id    (uint8)
@@ -99,7 +100,7 @@ In the following descriptions, the second line will be omitted (as if it were ro
 
 
 == TICK (0x01) ==
-Robots: all
+Robots: all active
 
 A tick is the atomic unit of time in a game. At every tick, the server broadcast a tick event:
 
@@ -168,7 +169,7 @@ Whenever two robots collide, each gets the following information:
 Server> 0x07
 Server> robot_id (uint32)
 
-Where 'robot_id' is the identifier of the other robot involved.
+where 'robot_id' is the identifier of the other robot involved.
 
 
 == HITWALL (0x08) ==
@@ -177,6 +178,14 @@ Robots: the clumsy robot
 Whenever a robot tries to get out of the map and is stopped by basic physics, it gets:
 
 Server> 0x08
+
+== KABOUM (0x09) ==
+Robots: all active and the kaboum'ed one
+
+Whenever a robot runs out of life and explode, every robot feels the disturbance in the Force and gets the last state of the gone robot:
+
+Server> 0x09
+Server> Robot (see Robot information)
 
 
 
