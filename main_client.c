@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 #include <unistd.h>
+#include <sys/timeb.h>
 
 #include "socket.h"
 #include "game.h"
@@ -47,7 +48,18 @@ void handleEvents()
 	switch (eventCode)
 	{
 		case E_TICK:
+		{
+			static struct timeb last = { 0, 0, 0, 0 };
+			struct timeb cur;
+			ftime(&cur);
+			float elapsed = (cur.time-last.time) + ((float)(cur.millitm-last.millitm)/1000);
+			if (elapsed > 1)
+			{
+				Order_Fire(10);
+				last = cur;
+			}
 			break;
+		}
 		case E_DUMP:
 			read(server, &robot, sizeof(Robot));
 			break;
@@ -137,11 +149,7 @@ int main(int argc, char** argv)
 	Order_TurnGun(-90);
 
 	while (42)
-	{
 		handleEvents();
-		usleep(1000000);
-		Order_Fire(10);
-	}
 
 	close(server);
 	return 0;

@@ -239,7 +239,7 @@ void cb_idleFunc()
 		break;
 	case E_BULLET:
 		read(server, &u1, sizeof(u32));
-		read(server, &b, sizeof(Bullet));
+		read(server, &b,  sizeof(Bullet));
 		break;
 	case E_HIT:
 		read(server, &u1, sizeof(u32));
@@ -248,7 +248,7 @@ void cb_idleFunc()
 		break;
 	case E_HITBY:
 		read(server, &u1, sizeof(u32));
-		read(server, &b, sizeof(Bullet));
+		read(server, &b,  sizeof(Bullet));
 		break;
 	case E_HITROBOT:
 		read(server, &u1, sizeof(u32));
@@ -258,7 +258,7 @@ void cb_idleFunc()
 		read(server, &u1, sizeof(u32));
 		break;
 	case E_KABOUM:
-		read(server, &r, sizeof(Robot));
+		read(server, &r,  sizeof(Robot));
 		u32 i;
 		ENABLE(, Explosion, explosions, i);
 		Explosion* e = &explosions[i];
