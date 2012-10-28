@@ -113,7 +113,7 @@ void drawRobot(Robot* r)
 			drawTexture(TEX_GUN, tex_width[TEX_GUN], tex_height[TEX_GUN]);
 		glPopMatrix();
 	glPopMatrix();
-	
+
 	glPushMatrix();
 		unsigned char glText[TEXT_BUFFER];
 		snprintf((string)glText, TEXT_BUFFER, "%f", r->energy);
@@ -121,7 +121,7 @@ void drawRobot(Robot* r)
 		float maxdim = max(r->height, r->width);
 		float scale = maxdim / textWidth;
 		textWidth *= scale;
-		
+
 		glColor4f(1, 1, 1, 1);
 		glTranslatef(r->x - textWidth / 2, r->y + maxdim, 0);
 		glScalef(scale, -scale, scale);
@@ -167,7 +167,7 @@ void cb_displayFunc()
 	ftime(&cur);
 	float elapsed = (cur.time-lastDraw.time) + ((float)(cur.millitm-lastDraw.millitm)/1000);
 	lastDraw = cur;
-	
+
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPushMatrix();
 	glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
@@ -191,7 +191,7 @@ void cb_displayFunc()
 
 	for (u32 i = 0; i < n_bullets; i++)
 		drawBullet(&bullet[i]);
-	
+
 	glPopMatrix();
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -199,12 +199,17 @@ void cb_displayFunc()
 
 void cb_idleFunc()
 {
-	u8 eventCode;
-	if (read(server, &eventCode, sizeof(u8)) <= 0) return;
-	
-	Robot r;
+	EventCode eventCode;
+	if (read(server, &eventCode, sizeof(EventCode)) <= 0) return;
+
+	Robot  r;
+	Bullet b;
+	u32    u1;
+	u32    u2;
 	switch (eventCode)
 	{
+	case E_TICK:
+		break;
 	case E_DUMP:
 		read(server, &game, sizeof(Game));
 
@@ -228,6 +233,31 @@ void cb_idleFunc()
 		n_bullets = nn_bullets;
 		read(server, bullet, sizeof(Bullet) * n_bullets);
 		break;
+	case E_SPOTTED:
+		read(server, &u1, sizeof(u32));
+		read(server, &u2, sizeof(u32));
+		read(server, &r,  sizeof(Robot));
+		break;
+	case E_BULLET:
+		read(server, &u1, sizeof(u32));
+		read(server, &b, sizeof(Bullet));
+		break;
+	case E_HIT:
+		read(server, &u1, sizeof(u32));
+		read(server, &b,  sizeof(Bullet));
+		read(server, &u2, sizeof(u32));
+		break;
+	case E_HITBY:
+		read(server, &u1, sizeof(u32));
+		read(server, &b, sizeof(Bullet));
+		break;
+	case E_HITROBOT:
+		read(server, &u1, sizeof(u32));
+		read(server, &u2, sizeof(u32));
+		break;
+	case E_HITWALL:
+		read(server, &u1, sizeof(u32));
+		break;
 	case E_KABOUM:
 		read(server, &r, sizeof(Robot));
 		u32 i;
@@ -237,6 +267,7 @@ void cb_idleFunc()
 		e->y       = r.y;
 		e->curTime = 0;
 		e->radius  = (r.width + r.height) / 4;
+		break;
 	}
 }
 
@@ -245,7 +276,7 @@ void cb_mouseFunc(int button, int state, int x, int y)
 	(void) state;
 	(void) x;
 	(void) y;
-	
+
 	if (button == GLUT_WHEEL_UP)
 		zoom *= 1.1;
 	else if (button == GLUT_WHEEL_DOWN)
@@ -340,7 +371,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);
 	winId = glutCreateWindow("Robot battle");
-	
+
 	glutDisplayFunc      (&cb_displayFunc);
 	glutIdleFunc         (&cb_idleFunc);
 	glutMouseFunc        (&cb_mouseFunc);

@@ -40,7 +40,7 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 			write(s->clients[j], &event_code,   sizeof(u8));
 			write(s->clients[j], &s->robots[i], sizeof(Robot));
 		DONE
-		
+
 		DISABLE(s->, robots, i);
 	}
 }
@@ -206,14 +206,14 @@ void Server_Tick(Server* s, float time)
 					if (j != i && RobotCollideRobot(&s->robots[j], &nr))
 					{
 						collide = true;
-						
+
 						static const EventCode eventCode = E_HITROBOT;
 						write(s->display,    &eventCode, sizeof(EventCode));
 						write(s->display,    &i,         sizeof(u32));
 						write(s->display,    &j,         sizeof(u32));
 						write(s->clients[i], &eventCode, sizeof(EventCode));
 						write(s->clients[i], &j,         sizeof(u32));
-						
+
 						r->velocity  = 0;
 						r->turnSpeed = 0;
 					}
@@ -259,7 +259,7 @@ void Server_Tick(Server* s, float time)
 				}
 			DONE
 	DONE
-	
+
 	{
 		static const EventCode eventCode = E_TICK;
 		write(s->display, &eventCode, sizeof(EventCode));
@@ -285,7 +285,7 @@ void Server_Dump(Server* s)
 	FOREACH(s->, bullets, i)
 		write(s->display, &s->bullets[i], sizeof(Bullet));
 	DONE
-	
+
 	FOREACH(s->, robots, i)
 		write(s->clients[i], &eventCode,    sizeof(EventCode));
 		write(s->clients[i], &s->robots[i], sizeof(Robot));

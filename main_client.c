@@ -41,6 +41,9 @@ void handleEvents()
 {
 	EventCode eventCode;
 	read(server, &eventCode, sizeof(EventCode));
+	Robot  r;
+	Bullet b;
+	u32    u;
 	switch (eventCode)
 	{
 		case E_TICK:
@@ -49,12 +52,25 @@ void handleEvents()
 			read(server, &robot, sizeof(Robot));
 			break;
 		case E_SPOTTED:
+			read(server, &r, sizeof(Robot));
+			break;
 		case E_BULLET:
+			read(server, &b, sizeof(Bullet));
+			break;
 		case E_HIT:
+			read(server, &b, sizeof(Bullet));
+			read(server, &u, sizeof(u32));
+			break;
 		case E_HITBY:
+			read(server, &b, sizeof(Bullet));
+			break;
 		case E_HITROBOT:
+			read(server, &u, sizeof(u32));
+			break;
 		case E_HITWALL:
+			break;
 		case E_KABOUM:
+			read(server, &r, sizeof(Robot));
 			break;
 	}
 }
@@ -119,7 +135,7 @@ int main(int argc, char** argv)
 	Order_Advance( 50);
 	Order_Turn   ( 30);
 	Order_TurnGun(-90);
-	
+
 	while (42)
 	{
 		handleEvents();
