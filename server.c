@@ -34,9 +34,8 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 	if (s->robots[i].energy < 0)
 	{
 		static const u8 event_code = E_KABOUM;
-		fwrite(&event_code,   sizeof(u8),    1, s->display_fh);
-		fwrite(&s->robots[i], sizeof(Robot), 1, s->display_fh);
-		fflush(s->display_fh);
+		write(s->display, &event_code,   sizeof(u8));
+		write(s->display, &s->robots[i], sizeof(Robot));
 		// TODO: send to robots
 		DISABLE(s->, robots, i);
 	}
@@ -55,7 +54,7 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 		return NULL;
 	}
 
-	ret->client         = ALLOC(s32,   n_clients);
+	ret->clients        = ALLOC(s32,   n_clients);
 	ret->game.width     = 1000;
 	ret->game.height    = 1000;
 	ret->game.n_slots   = n_clients;
@@ -74,8 +73,8 @@ void Server_Delete(Server* s)
 	FREE(s->, bullets);
 	FREE(s->, robots);
 	for (u32 i = 0; i < s->game.n_clients; i++)
-		close(s->client[i]);
-	free(s->client);
+		close(s->clients[i]);
+	free(s->clients);
 	close(s->display);
 	close(s->listener);
 	free(s);
@@ -106,8 +105,7 @@ void Server_AcceptDisplay(Server* s)
 {
 	assert(s);
 
-	s->display    = TCP_Accept(s->listener);
-	s->display_fh = fdopen(s->display, "w");
+	s->display = TCP_Accept(s->listener);
 }
 
 void Server_AcceptClients(Server* s)
@@ -116,16 +114,16 @@ void Server_AcceptClients(Server* s)
 
 	for (u32 i = 0; i < s->game.n_slots; i++)
 	{
-		s->client[i] = TCP_Accept(s->listener);
+		s->clients[i] = TCP_Accept(s->listener);
 		s->game.n_clients++;
 
 		u8 hello[2];
-		read(s->client[i],  hello,           sizeof(u8) * 2);
-		write(s->client[i], &MAGIC_WORD,     sizeof(u8));
-		write(s->client[i], &VERSION_NUMBER, sizeof(u8));
-		write(s->client[i], &s->game,        sizeof(Game));
+		read(s->clients[i],  hello,           sizeof(u8) * 2);
+		write(s->clients[i], &MAGIC_WORD,     sizeof(u8));
+		write(s->clients[i], &VERSION_NUMBER, sizeof(u8));
+		write(s->clients[i], &s->game,        sizeof(Game));
 		for (u32 j = 0; j < i; j++)
-			write(s->client[j], &s->game.n_clients, sizeof(u32));
+			write(s->clients[j], &s->game.n_clients, sizeof(u32));
 	}
 }
 
@@ -134,7 +132,7 @@ bool Server_HandleOrder(Server* s, u32 id)
 	assert(s);
 
 	Order order;
-	if (read(s->client[id], &order,  sizeof(Order)) <= 0)
+	if (read(s->clients[id], &order,  sizeof(Order)) <= 0)
 		return false;
 
 	Robot* r = &s->robots[id];
@@ -175,7 +173,7 @@ bool Server_HandleOrder(Server* s, u32 id)
 void Server_Tick(Server* s, float time)
 {
 	assert(s);
-	
+
 	if (s->active_robots[0] == 3)
 		decreaseEnergy(s, 0, time*10);
 
@@ -227,26 +225,23 @@ void Server_Tick(Server* s, float time)
 	DONE
 }
 
-void Server_Dump(Server* s, FILE* f)
+void Server_Dump(Server* s)
 {
 	assert(s);
-	assert(f);
 
 	static const u8 eventCode = E_DUMP;
-	fwrite(&eventCode,    sizeof(u8),   1, f);
-	fwrite(&s->game,      sizeof(Game), 1, f);
-	
-	fwrite(&s->n_robots,  sizeof(u32), 1, f);
+	write(s->display, &eventCode,   sizeof(u8));
+	write(s->display, &s->game,     sizeof(Game));
+
+	write(s->display, &s->n_robots, sizeof(u32));
 	FOREACH(s->, robots, i)
-		fwrite(&s->robots[i], sizeof(Robot), 1, f);
+		write(s->display, &s->robots[i], sizeof(Robot));
 	DONE
-	
-	fwrite(&s->n_bullets, sizeof(u32), 1, f);
+
+	write(s->display, &s->n_bullets, sizeof(u32));
 	FOREACH(s->, bullets, i)
-		fwrite(&s->bullets[i], sizeof(Bullet), 1, f);
+		write(s->display, &s->bullets[i], sizeof(Bullet));
 	DONE
-	
-	fflush(f);
 }
 
 void Server_Loop(Server* s)
@@ -255,8 +250,8 @@ void Server_Loop(Server* s)
 
 	int fd_max = 0;
 	for (u32 i = 0; i < s->game.n_clients; i++)
-		if (s->client[i] > fd_max)
-		fd_max = s->client[i];
+		if (s->clients[i] > fd_max)
+		fd_max = s->clients[i];
 	fd_max++;
 
 	srandom(time(NULL));
@@ -278,21 +273,21 @@ void Server_Loop(Server* s)
 		ENABLE(s->, Robot, robots, id);    assert(i == id); // TODO
 		Robot* r = &s->robots[id];
 		memcpy(r, &nr, sizeof(Robot));
-		write(s->client[i], r, sizeof(Robot));
+		write(s->clients[i], r, sizeof(Robot));
 	}
 	for (u32 i = 0; i < s->game.n_clients; i++)
-		write(s->client[i], &START_MESSAGE, sizeof(u8));
+		write(s->clients[i], &START_MESSAGE, sizeof(u8));
 
 
 	int epollfd = epoll_create(s->game.n_clients);
 	struct epoll_event  ev;
 	for (u32 i = 0; i < s->game.n_clients; i++)
 	{
-		int flags = fcntl(s->client[i], F_GETFL, 0);
-		fcntl(s->client[i], F_SETFL, flags | O_NONBLOCK);
+		int flags = fcntl(s->clients[i], F_GETFL, 0);
+		fcntl(s->clients[i], F_SETFL, flags | O_NONBLOCK);
 		ev.events   = EPOLLIN;
 		ev.data.u32 = i;
-		epoll_ctl(epollfd, EPOLL_CTL_ADD, s->client[i], &ev);
+		epoll_ctl(epollfd, EPOLL_CTL_ADD, s->clients[i], &ev);
 	}
 
 	struct timeb last;
@@ -312,6 +307,6 @@ void Server_Loop(Server* s)
 		ftime(&cur);
 		Server_Tick(s, (cur.time-last.time)+((float)(cur.millitm-last.millitm) / 1000));
 		Server_Debug(s);
-		Server_Dump(s, s->display_fh);
+		Server_Dump(s);
 	}
 }

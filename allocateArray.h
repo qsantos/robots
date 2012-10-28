@@ -20,7 +20,7 @@
 #define ALLOCATE_ARRAY_H
 
 // In this file are grouped some macros which aims to simplify the use of
-// dynamic arrays width bitfield (used to know if a memory cell is used)
+// dynamic bitfield-driven (allowing to release and reuse cells) arrays
 
 // In general:
 //   * P    is a prefix which says where data is found (e.g. P robots means P=P )
