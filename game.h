@@ -39,7 +39,7 @@ typedef enum
 {
 	E_TICK     = 0x01,
 	E_DUMP     = 0x02,
-	E_SPOT     = 0x03,
+	E_SPOTTED  = 0x03,
 	E_BULLET   = 0x04,
 	E_HIT      = 0x05,
 	E_HITBY    = 0x06,

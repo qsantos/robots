@@ -22,7 +22,8 @@
 #include "socket.h"
 #include "game.h"
 
-s32 server = 0;
+s32   server = 0;
+Robot robot;
 
 #define ORDER(Name, CODE)                     \
 void Order_##Name(float param)                \
@@ -35,6 +36,28 @@ ORDER(Advance, O_ADVANCE)
 ORDER(Turn,    O_TURN   )
 ORDER(TurnGun, O_TURNGUN)
 ORDER(Fire,    O_FIRE   )
+
+void handleEvents()
+{
+	EventCode eventCode;
+	read(server, &eventCode, sizeof(EventCode));
+	switch (eventCode)
+	{
+		case E_TICK:
+			break;
+		case E_DUMP:
+			read(server, &robot, sizeof(Robot));
+			break;
+		case E_SPOTTED:
+		case E_BULLET:
+		case E_HIT:
+		case E_HITBY:
+		case E_HITROBOT:
+		case E_HITWALL:
+		case E_KABOUM:
+			break;
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -99,6 +122,7 @@ int main(int argc, char** argv)
 	
 	while (42)
 	{
+		handleEvents();
 		usleep(1000000);
 		Order_Fire(10);
 	}

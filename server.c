@@ -58,7 +58,7 @@ Server* Server_New(string interface, u16 port, u32 n_clients)
 		return NULL;
 	}
 
-	ret->clients        = ALLOC(s32,   n_clients);
+	ret->clients        = ALLOC(s32, n_clients);
 	ret->game.width     = 1000;
 	ret->game.height    = 1000;
 	ret->game.n_slots   = n_clients;
@@ -194,10 +194,10 @@ void Server_Tick(Server* s, float time)
 			bool collide = !GameContainsRobot(&s->game, &nr);
 			if (collide)
 			{
-				static const u8 eventCode = E_HITWALL;
-				write(s->display,    &eventCode, sizeof(u8));
+				static const EventCode eventCode = E_HITWALL;
+				write(s->display,    &eventCode, sizeof(EventCode));
 				write(s->display,    &i,         sizeof(u32));
-				write(s->clients[i], &eventCode, sizeof(u8));
+				write(s->clients[i], &eventCode, sizeof(EventCode));
 			}
 			if (!collide)
 				FOREACH(s->, robots, j)
@@ -207,11 +207,11 @@ void Server_Tick(Server* s, float time)
 					{
 						collide = true;
 						
-						static const u8 eventCode = E_HITROBOT;
-						write(s->display,    &eventCode, sizeof(u8));
+						static const EventCode eventCode = E_HITROBOT;
+						write(s->display,    &eventCode, sizeof(EventCode));
 						write(s->display,    &i,         sizeof(u32));
 						write(s->display,    &j,         sizeof(u32));
-						write(s->clients[i], &eventCode, sizeof(u8));
+						write(s->clients[i], &eventCode, sizeof(EventCode));
 						write(s->clients[i], &j,         sizeof(u32));
 						
 						r->velocity  = 0;
@@ -234,14 +234,21 @@ void Server_Tick(Server* s, float time)
 				if (RobotCollidePoint(&s->robots[j], b->x, b->y))
 				{
 					{
-						static const u8 eventCode = E_HIT;
-						write(s->clients[b->from], &eventCode, sizeof(u8));
+						static const EventCode eventCode = E_HIT;
+						write(s->display, &eventCode, sizeof(EventCode));
+						write(s->display, &b->from,   sizeof(u32));
+						write(s->display, b,          sizeof(Bullet));
+						write(s->display, &j,         sizeof(u32));
+						write(s->clients[b->from], &eventCode, sizeof(EventCode));
 						write(s->clients[b->from], b,          sizeof(Bullet));
 						write(s->clients[b->from], &j,         sizeof(u32));
 					}
 					{
-						static const u8 eventCode = E_HITBY;
-						write(s->clients[j], &eventCode, sizeof(u8));
+						static const EventCode eventCode = E_HITBY;
+						write(s->display, &eventCode, sizeof(EventCode));
+						write(s->display, &j,         sizeof(u32));
+						write(s->display, b,          sizeof(Bullet));
+						write(s->clients[j], &eventCode, sizeof(EventCode));
 						write(s->clients[j], b,          sizeof(Bullet));
 					}
 
@@ -254,10 +261,10 @@ void Server_Tick(Server* s, float time)
 	DONE
 	
 	{
-		static const u8 eventCode = E_TICK;
-		write(s->display, &eventCode, sizeof(u8));
+		static const EventCode eventCode = E_TICK;
+		write(s->display, &eventCode, sizeof(EventCode));
 		FOREACH(s->, robots, i)
-			write(s->clients[i], &eventCode, sizeof(u8));
+			write(s->clients[i], &eventCode, sizeof(EventCode));
 		DONE
 	}
 }
@@ -266,18 +273,22 @@ void Server_Dump(Server* s)
 {
 	assert(s);
 
-	static const u8 eventCode = E_DUMP;
-	write(s->display, &eventCode,   sizeof(u8));
-	write(s->display, &s->game,     sizeof(Game));
+	static const EventCode eventCode = E_DUMP;
 
+	write(s->display, &eventCode,   sizeof(EventCode));
+	write(s->display, &s->game,     sizeof(Game));
 	write(s->display, &s->n_robots, sizeof(u32));
 	FOREACH(s->, robots, i)
 		write(s->display, &s->robots[i], sizeof(Robot));
 	DONE
-
 	write(s->display, &s->n_bullets, sizeof(u32));
 	FOREACH(s->, bullets, i)
 		write(s->display, &s->bullets[i], sizeof(Bullet));
+	DONE
+	
+	FOREACH(s->, robots, i)
+		write(s->clients[i], &eventCode,    sizeof(EventCode));
+		write(s->clients[i], &s->robots[i], sizeof(Robot));
 	DONE
 }
 

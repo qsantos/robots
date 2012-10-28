@@ -82,7 +82,7 @@ An events is a message which is sent by the server to both the display and the c
 
 TICK     0x01
 DUMP     0x02
-SPOT     0x03
+SPOTTED  0x03
 BULLET   0x04
 HIT      0x05
 HITBY    0x06
@@ -107,9 +107,9 @@ A tick is the atomic unit of time in a game. At every tick, the server broadcast
 Server> 0x01
 
 == DUMP (0x02) ==
-Robots: none (but Chuck Norris's one)
+Robots: all active
 
-When the server thinks the display should get a new dump of the game's data, it send everything to it:
+When the server thinks a little reminder would be helpful, it sends game information. Everything to display:
 
 Server> 0x02
 Server> Game
@@ -120,8 +120,13 @@ Server> Bullet    (n_bullet items) (see Bullet information)
 
 where 'n_robots' (respectively 'n_bullets') is the total number of active robots (bullets) still in the game.
 
+And its own information to every robot:
 
-== SPOT (0x03) ==
+Server> 0x02
+Server> Robot (see Robot information)
+
+
+== SPOTTED (0x03) ==
 Robots: the robot which spotted his foe
 
 Whenever another robot is in sight, the client gets the event:
