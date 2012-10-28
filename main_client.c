@@ -23,14 +23,14 @@
 #include "game.h"
 
 s32 server = 0;
-#define ORDER(Name, CODE)                   \
-void Order_##Name(float param)              \
-{                                           \
-	static Order order = { CODE, 0 };         \
-	order.param = param;                      \
-	write(server, &order, sizeof(Order));     \
-}
 
+#define ORDER(Name, CODE)                     \
+void Order_##Name(float param)                \
+{                                             \
+	static Order order = { CODE, 0 };     \
+	order.param = param;                  \
+	write(server, &order, sizeof(Order)); \
+}
 ORDER(Advance, O_ADVANCE)
 ORDER(Turn,    O_TURN   )
 ORDER(TurnGun, O_TURNGUN)
@@ -96,7 +96,6 @@ int main(int argc, char** argv)
 	Order_Advance( 50);
 	Order_Turn   ( 30);
 	Order_TurnGun(-90);
-
 	
 	while (42)
 	{

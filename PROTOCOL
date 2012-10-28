@@ -142,9 +142,10 @@ Server> Bullet (see Bullet information)
 == HIT (0x05) ==
 Robots: the robot which fired the hitting bullet
 
-Whenever bullet fired by the robot hits a target, the folowing event occurs:
+Whenever a bullet fired by the robot hits a target, the folowing event occurs:
 
 Server> 0x05
+Server> Bullet (see Bullet information)
 Server> robot_id (uint32)
 
 where 'robot_id' is the identifier of the robot which was hit.
@@ -156,15 +157,13 @@ Robots: the robot the bullet hit
 Whenever the robot is hit by a bullet, it gets:
 
 Server> 0x06
-Server> robot_id (uint32)
-
-where 'robot_id' is the identifier of the robot which fired the bullet.
+Server> Bullet (see Bullet information)
 
 
 == HITROBOT (0x07) ==
-Robots: the robots which were involved in the collision
+Robots: the robot which caused the collision
 
-Whenever two robots collide, each gets the following information:
+Whenever two robots collide, one gets the following information:
 
 Server> 0x07
 Server> robot_id (uint32)

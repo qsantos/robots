@@ -36,7 +36,11 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 		static const u8 event_code = E_KABOUM;
 		write(s->display, &event_code,   sizeof(u8));
 		write(s->display, &s->robots[i], sizeof(Robot));
-		// TODO: send to robots
+		FOREACH(s->, robots, j)
+			write(s->clients[j], &event_code,   sizeof(u8));
+			write(s->clients[j], &s->robots[i], sizeof(Robot));
+		DONE
+		
 		DISABLE(s->, robots, i);
 	}
 }
@@ -104,7 +108,6 @@ void Server_Debug(Server* s)
 void Server_AcceptDisplay(Server* s)
 {
 	assert(s);
-
 	s->display = TCP_Accept(s->listener);
 }
 
@@ -180,30 +183,44 @@ void Server_Tick(Server* s, float time)
 	FOREACH(s->, robots, i)
 		Robot* r = &s->robots[i];
 		r->gunAngle += deg2rad(time * r->turnGunSpeed);
-		if (!r->velocity && !r->turnSpeed)
-			continue;
-
-		Robot nr;
-		memcpy(&nr, r, sizeof(Robot));
-		nr.angle += deg2rad(time * r->turnSpeed);
-		nr.x += time * r->velocity * sin(r->angle);
-		nr.y -= time * r->velocity * cos(r->angle);
-
-		bool collide = !GameContainsRobot(&s->game, &nr);
-		if (!collide)
-			FOREACH(s->, robots, j)
-				if (collide) // breaks every inner loop as soon as possible
-					break;
-				if (j != i && RobotCollideRobot(&s->robots[j], &nr))
-					collide = true;
-			DONE
-		if (collide)
+		if (r->velocity || r->turnSpeed)
 		{
-			r->velocity  = 0;
-			r->turnSpeed = 0;
+			Robot nr;
+			memcpy(&nr, r, sizeof(Robot));
+			nr.angle += deg2rad(time * r->turnSpeed);
+			nr.x += time * r->velocity * sin(r->angle);
+			nr.y -= time * r->velocity * cos(r->angle);
+
+			bool collide = !GameContainsRobot(&s->game, &nr);
+			if (collide)
+			{
+				static const u8 eventCode = E_HITWALL;
+				write(s->display,    &eventCode, sizeof(u8));
+				write(s->display,    &i,         sizeof(u32));
+				write(s->clients[i], &eventCode, sizeof(u8));
+			}
+			if (!collide)
+				FOREACH(s->, robots, j)
+					if (collide) // breaks every inner loop as soon as possible
+						break;
+					if (j != i && RobotCollideRobot(&s->robots[j], &nr))
+					{
+						collide = true;
+						
+						static const u8 eventCode = E_HITROBOT;
+						write(s->display,    &eventCode, sizeof(u8));
+						write(s->display,    &i,         sizeof(u32));
+						write(s->display,    &j,         sizeof(u32));
+						write(s->clients[i], &eventCode, sizeof(u8));
+						write(s->clients[i], &j,         sizeof(u32));
+						
+						r->velocity  = 0;
+						r->turnSpeed = 0;
+					}
+				DONE
+			if (!collide)
+				memcpy(r, &nr, sizeof(Robot));
 		}
-		else
-			memcpy(r, &nr, sizeof(Robot));
 	DONE
 
 	FOREACH(s->, bullets, i)
@@ -216,6 +233,18 @@ void Server_Tick(Server* s, float time)
 			FOREACH(s->, robots, j)
 				if (RobotCollidePoint(&s->robots[j], b->x, b->y))
 				{
+					{
+						static const u8 eventCode = E_HIT;
+						write(s->clients[b->from], &eventCode, sizeof(u8));
+						write(s->clients[b->from], b,          sizeof(Bullet));
+						write(s->clients[b->from], &j,         sizeof(u32));
+					}
+					{
+						static const u8 eventCode = E_HITBY;
+						write(s->clients[j], &eventCode, sizeof(u8));
+						write(s->clients[j], b,          sizeof(Bullet));
+					}
+
 					s->robots[b->from].energy += b->energy * 1.5;
 					decreaseEnergy(s, j, b->energy);
 					DISABLE(s->, bullets, i);
@@ -223,6 +252,14 @@ void Server_Tick(Server* s, float time)
 				}
 			DONE
 	DONE
+	
+	{
+		static const u8 eventCode = E_TICK;
+		write(s->display, &eventCode, sizeof(u8));
+		FOREACH(s->, robots, i)
+			write(s->clients[i], &eventCode, sizeof(u8));
+		DONE
+	}
 }
 
 void Server_Dump(Server* s)
