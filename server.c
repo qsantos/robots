@@ -33,11 +33,11 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 	s->robots[i].energy -= amount;
 	if (s->robots[i].energy < 0)
 	{
-		static const u8 event_code = E_KABOUM;
-		write(s->display, &event_code,   sizeof(u8));
+		static const EventCode event_code = E_KABOUM;
+		write(s->display, &event_code,   sizeof(EventCode));
 		write(s->display, &s->robots[i], sizeof(Robot));
 		FOREACH(s->, robots, j)
-			write(s->clients[j], &event_code,   sizeof(u8));
+			write(s->clients[j], &event_code,   sizeof(EventCode));
 			write(s->clients[j], &s->robots[i], sizeof(Robot));
 		DONE
 
@@ -109,6 +109,8 @@ void Server_AcceptDisplay(Server* s)
 {
 	assert(s);
 	s->display = TCP_Accept(s->listener);
+	int flags = fcntl(s->display, F_GETFL, 0);
+	fcntl(s->display, F_SETFL, flags | O_NONBLOCK);
 }
 
 void Server_AcceptClients(Server* s)

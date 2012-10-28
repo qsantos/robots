@@ -194,7 +194,6 @@ void cb_displayFunc()
 
 	glPopMatrix();
 	glutSwapBuffers();
-	glutPostRedisplay();
 }
 
 void cb_idleFunc()
@@ -269,6 +268,7 @@ void cb_idleFunc()
 		e->radius  = (r.width + r.height) / 4;
 		break;
 	}
+	glutPostRedisplay();
 }
 
 void cb_mouseFunc(int button, int state, int x, int y)
