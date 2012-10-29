@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <sys/timeb.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "socket.h"
 #include "game.h"
@@ -84,6 +85,88 @@ typedef struct
 	float radius;
 } Explosion;
 DEF(Explosion, explosions)
+
+void handleEvent()
+{
+	EventCode eventCode;
+	if (read(server, &eventCode, sizeof(EventCode)) <= 0) return;
+
+	Robot  r;
+	Bullet b;
+	u32    u1;
+	u32    u2;
+	switch (eventCode)
+	{
+	case E_TICK:
+		break;
+	case E_DUMP:
+		read(server, &game, sizeof(Game));
+
+		u32 nn_robots;
+		read(server, &nn_robots, sizeof(u32));
+		if (nn_robots > a_robots)
+		{
+			a_robots = nn_robots;
+			robots = REALLOC(robots, Robot, a_robots);
+		}
+		n_robots = nn_robots;
+		read(server, robots, sizeof(Robot) * n_robots);
+
+		u32 nn_bullets;
+		read(server, &nn_bullets, sizeof(u32));
+		if (nn_bullets > a_bullets)
+		{
+			a_bullets = nn_bullets;
+			bullet = REALLOC(bullet, Bullet, a_bullets);
+		}
+		n_bullets = nn_bullets;
+		read(server, bullet, sizeof(Bullet) * n_bullets);
+		break;
+	case E_ROBOT:
+		read(server, &u1, sizeof(u32));
+		read(server, &u2, sizeof(u32));
+		read(server, &r,  sizeof(Robot));
+		break;
+	case E_BULLET:
+		read(server, &u1, sizeof(u32));
+		read(server, &b,  sizeof(Bullet));
+		break;
+	case E_HIT:
+		read(server, &u1, sizeof(u32));
+		read(server, &b,  sizeof(Bullet));
+		read(server, &u2, sizeof(u32));
+		break;
+	case E_HITBY:
+		read(server, &u1, sizeof(u32));
+		read(server, &b,  sizeof(Bullet));
+		break;
+	case E_HITROBOT:
+		read(server, &u1, sizeof(u32));
+		read(server, &u2, sizeof(u32));
+		break;
+	case E_HITWALL:
+		read(server, &u1, sizeof(u32));
+		break;
+	case E_KABOUM:
+		read(server, &r,  sizeof(Robot));
+		u32 i;
+		ENABLE(, Explosion, explosions, i);
+		Explosion* e = &explosions[i];
+		e->x       = r.x;
+		e->y       = r.y;
+		e->curTime = 0;
+		e->radius  = (r.width + r.height) / 4;
+		break;
+	}
+}
+
+void* listener(void* params)
+{
+	(void) params;
+	while (true)
+		handleEvent();
+	return NULL;
+}
 
 void drawTexture(Texture tex, float width, float height)
 {
@@ -194,80 +277,6 @@ void cb_displayFunc()
 	
 	glPopMatrix();
 	glutSwapBuffers();
-}
-
-void cb_idleFunc()
-{
-	EventCode eventCode;
-	if (read(server, &eventCode, sizeof(EventCode)) <= 0) return;
-
-	Robot  r;
-	Bullet b;
-	u32    u1;
-	u32    u2;
-	switch (eventCode)
-	{
-	case E_TICK:
-		break;
-	case E_DUMP:
-		read(server, &game, sizeof(Game));
-
-		u32 nn_robots;
-		read(server, &nn_robots, sizeof(u32));
-		if (nn_robots > a_robots)
-		{
-			a_robots = nn_robots;
-			robots = REALLOC(robots, Robot, a_robots);
-		}
-		n_robots = nn_robots;
-		read(server, robots, sizeof(Robot) * n_robots);
-
-		u32 nn_bullets;
-		read(server, &nn_bullets, sizeof(u32));
-		if (nn_bullets > a_bullets)
-		{
-			a_bullets = nn_bullets;
-			bullet = REALLOC(bullet, Bullet, a_bullets);
-		}
-		n_bullets = nn_bullets;
-		read(server, bullet, sizeof(Bullet) * n_bullets);
-		break;
-	case E_ROBOT:
-		read(server, &u1, sizeof(u32));
-		read(server, &u2, sizeof(u32));
-		read(server, &r,  sizeof(Robot));
-		break;
-	case E_BULLET:
-		read(server, &u1, sizeof(u32));
-		read(server, &b,  sizeof(Bullet));
-		break;
-	case E_HIT:
-		read(server, &u1, sizeof(u32));
-		read(server, &b,  sizeof(Bullet));
-		read(server, &u2, sizeof(u32));
-		break;
-	case E_HITBY:
-		read(server, &u1, sizeof(u32));
-		read(server, &b,  sizeof(Bullet));
-		break;
-	case E_HITROBOT:
-		read(server, &u1, sizeof(u32));
-		read(server, &u2, sizeof(u32));
-		break;
-	case E_HITWALL:
-		read(server, &u1, sizeof(u32));
-		break;
-	case E_KABOUM:
-		read(server, &r,  sizeof(Robot));
-		u32 i;
-		ENABLE(, Explosion, explosions, i);
-		Explosion* e = &explosions[i];
-		e->x       = r.x;
-		e->y       = r.y;
-		e->curTime = 0;
-		e->radius  = (r.width + r.height) / 4;
-		break;
-	}
 	glutPostRedisplay();
 }
 
@@ -373,7 +382,6 @@ int main(int argc, char** argv)
 	winId = glutCreateWindow("Robot battle");
 
 	glutDisplayFunc      (&cb_displayFunc);
-	glutIdleFunc         (&cb_idleFunc);
 	glutMouseFunc        (&cb_mouseFunc);
 	glutMotionFunc       (&cb_motionFunc);
 	glutPassiveMotionFunc(&cb_passiveMotionFunc);
@@ -381,8 +389,14 @@ int main(int argc, char** argv)
 	INIT(, explosions);
 	ftime(&lastDraw);
 
+	pthread_t listenerThread;
+	pthread_create(&listenerThread, NULL, listener, NULL);
+
 	glInit();
 	glutMainLoop();
+	
+	pthread_cancel(listenerThread);
+	pthread_join(listenerThread, NULL);
 
 	FREE(, explosions);
 	free(bullet);
