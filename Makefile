@@ -3,7 +3,7 @@ OFILES_SERVER  = socket.o main_server.o server.o game.o
 OFILES_DISPLAY = socket.o main_display.o game.o
 
 CFLAGS  = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500 -g
-LDFLAGS = -lm -lGL -lglut -lSOIL
+LDFLAGS = -lm
 
 all: client server display
 
@@ -14,7 +14,7 @@ server: $(OFILES_SERVER)
 	gcc $(LDFLAGS) $^ -o $@
 
 display: $(OFILES_DISPLAY)
-	gcc $(LDFLAGS) $^ -o $@
+	gcc $(LDFLAGS) -lGL -lglut -lSOIL $^ -o $@
 
 %.o: %.c
 	gcc $(CFLAGS) -c $<

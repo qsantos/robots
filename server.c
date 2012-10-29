@@ -182,7 +182,7 @@ void Server_Tick(Server* s, float time)
 	assert(s);
 
 	if (s->active_robots[0] == 3)
-		decreaseEnergy(s, 0, time/10);
+		decreaseEnergy(s, 0, time*10);
 
 	FOREACH(s->, robots, i)
 		Robot* r = &s->robots[i];
