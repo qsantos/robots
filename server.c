@@ -28,6 +28,8 @@
 
 #include "socket.h"
 
+#define RADAR_SIGHT 1000
+
 static inline void decreaseEnergy(Server* s, u32 i, float amount)
 {
 	s->robots[i].energy -= amount;
@@ -99,7 +101,7 @@ void Server_Debug(Server* s)
 	printf("Bullets:\n");
 	FOREACH(s->, bullets, i)
 		Bullet* b = &s->bullets[i];
-		printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, b->angle, b->energy);
+		printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, rad2deg(b->angle), b->energy);
 	DONE
 	printf("\n");
 
@@ -180,49 +182,58 @@ void Server_Tick(Server* s, float time)
 	assert(s);
 
 	if (s->active_robots[0] == 3)
-		decreaseEnergy(s, 0, time*10);
+		decreaseEnergy(s, 0, time/10);
 
 	FOREACH(s->, robots, i)
 		Robot* r = &s->robots[i];
 		r->gunAngle += deg2rad(time * r->turnGunSpeed);
-		if (r->velocity || r->turnSpeed)
+		Robot nr;
+		memcpy(&nr, r, sizeof(Robot));
+		nr.angle += deg2rad(time * r->turnSpeed);
+		nr.x += time * r->velocity * sin(r->angle);
+		nr.y -= time * r->velocity * cos(r->angle);
+
+		bool collide = !GameContainsRobot(&s->game, &nr);
+		if (collide)
 		{
-			Robot nr;
-			memcpy(&nr, r, sizeof(Robot));
-			nr.angle += deg2rad(time * r->turnSpeed);
-			nr.x += time * r->velocity * sin(r->angle);
-			nr.y -= time * r->velocity * cos(r->angle);
-
-			bool collide = !GameContainsRobot(&s->game, &nr);
-			if (collide)
-			{
-				static const EventCode eventCode = E_HITWALL;
-				write(s->display,    &eventCode, sizeof(EventCode));
-				write(s->display,    &i,         sizeof(u32));
-				write(s->clients[i], &eventCode, sizeof(EventCode));
-			}
-			if (!collide)
-				FOREACH(s->, robots, j)
-					if (collide) // breaks every inner loop as soon as possible
-						break;
-					if (j != i && RobotCollideRobot(&s->robots[j], &nr))
-					{
-						collide = true;
-
-						static const EventCode eventCode = E_HITROBOT;
-						write(s->display,    &eventCode, sizeof(EventCode));
-						write(s->display,    &i,         sizeof(u32));
-						write(s->display,    &j,         sizeof(u32));
-						write(s->clients[i], &eventCode, sizeof(EventCode));
-						write(s->clients[i], &j,         sizeof(u32));
-
-						r->velocity  = 0;
-						r->turnSpeed = 0;
-					}
-				DONE
-			if (!collide)
-				memcpy(r, &nr, sizeof(Robot));
+			static const EventCode eventCode = E_HITWALL;
+			write(s->display,    &eventCode, sizeof(EventCode));
+			write(s->display,    &i,         sizeof(u32));
+			write(s->clients[i], &eventCode, sizeof(EventCode));
 		}
+		FOREACH(s->, robots, j)
+			if (j != i)
+			{
+				float distance = distanceRobots(r, &s->robots[j]);
+				float angle    = angleRobots   (r, &s->robots[j]);
+				float radar    = normRad(r->angle + r->gunAngle);
+				if (distance <= RADAR_SIGHT && fabs(radar - angle) <= PI/8)
+				{
+					static const EventCode eventCode = E_ROBOT;
+					write(s->display,    &eventCode,    sizeof(EventCode));
+					write(s->display,    &i,            sizeof(u32));
+					write(s->display,    &s->robots[j], sizeof(Robot));
+					write(s->clients[i], &eventCode,    sizeof(EventCode));
+					write(s->clients[i], &s->robots[j], sizeof(Robot));
+				}
+				if (RobotCollideRobot(&s->robots[j], &nr))
+				{
+					collide = true;
+
+					static const EventCode eventCode = E_HITROBOT;
+					write(s->display,    &eventCode, sizeof(EventCode));
+					write(s->display,    &i,         sizeof(u32));
+					write(s->display,    &j,         sizeof(u32));
+					write(s->clients[i], &eventCode, sizeof(EventCode));
+					write(s->clients[i], &j,         sizeof(u32));
+
+					r->velocity  = 0;
+					r->turnSpeed = 0;
+				}
+			}
+		DONE
+		if (!collide)
+			memcpy(r, &nr, sizeof(Robot));
 	DONE
 
 	FOREACH(s->, bullets, i)
@@ -233,23 +244,25 @@ void Server_Tick(Server* s, float time)
 			DISABLE(s->, bullets, i)
 		else
 			FOREACH(s->, robots, j)
-				if (RobotCollidePoint(&s->robots[j], b->x, b->y))
+				Robot* r = &s->robots[j];
+// TODO: a bullet might be disabled and then spotted...
+				if (RobotCollidePoint(r, b->x, b->y))
 				{
 					{
 						static const EventCode eventCode = E_HIT;
-						write(s->display, &eventCode, sizeof(EventCode));
-						write(s->display, &b->from,   sizeof(u32));
-						write(s->display, b,          sizeof(Bullet));
-						write(s->display, &j,         sizeof(u32));
+						write(s->display,          &eventCode, sizeof(EventCode));
+						write(s->display,          &b->from,   sizeof(u32));
+						write(s->display,          b,          sizeof(Bullet));
+						write(s->display,          &j,         sizeof(u32));
 						write(s->clients[b->from], &eventCode, sizeof(EventCode));
 						write(s->clients[b->from], b,          sizeof(Bullet));
 						write(s->clients[b->from], &j,         sizeof(u32));
 					}
 					{
 						static const EventCode eventCode = E_HITBY;
-						write(s->display, &eventCode, sizeof(EventCode));
-						write(s->display, &j,         sizeof(u32));
-						write(s->display, b,          sizeof(Bullet));
+						write(s->display,    &eventCode, sizeof(EventCode));
+						write(s->display,    &j,         sizeof(u32));
+						write(s->display,    b,          sizeof(Bullet));
 						write(s->clients[j], &eventCode, sizeof(EventCode));
 						write(s->clients[j], b,          sizeof(Bullet));
 					}
@@ -257,7 +270,21 @@ void Server_Tick(Server* s, float time)
 					s->robots[b->from].energy += b->energy * 1.5;
 					decreaseEnergy(s, j, b->energy);
 					DISABLE(s->, bullets, i);
-					break;
+				}
+				else
+				{
+					float distance = distanceBullet(r, b);
+					float angle    = angleBullet   (r, b);
+					float radar    = normRad(r->angle + r->gunAngle);
+					if (distance <= RADAR_SIGHT && fabs(radar - angle) <= PI/8)
+					{
+						static const EventCode eventCode = E_BULLET;
+						write(s->display,    &eventCode, sizeof(EventCode));
+						write(s->display,    &j,         sizeof(u32));
+						write(s->display,    b,          sizeof(Bullet));
+						write(s->clients[j], &eventCode, sizeof(EventCode));
+						write(s->clients[j], b,          sizeof(Bullet));
+					}
 				}
 			DONE
 	DONE
@@ -356,7 +383,7 @@ void Server_Loop(Server* s)
 		last = cur;
 		ftime(&cur);
 		Server_Tick(s, (cur.time-last.time)+((float)(cur.millitm-last.millitm) / 1000));
-		Server_Debug(s);
+//		Server_Debug(s);
 		Server_Dump(s);
 	}
 }

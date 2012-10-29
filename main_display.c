@@ -191,7 +191,7 @@ void cb_displayFunc()
 
 	for (u32 i = 0; i < n_bullets; i++)
 		drawBullet(&bullet[i]);
-
+	
 	glPopMatrix();
 	glutSwapBuffers();
 }
@@ -232,7 +232,7 @@ void cb_idleFunc()
 		n_bullets = nn_bullets;
 		read(server, bullet, sizeof(Bullet) * n_bullets);
 		break;
-	case E_SPOTTED:
+	case E_ROBOT:
 		read(server, &u1, sizeof(u32));
 		read(server, &u2, sizeof(u32));
 		read(server, &r,  sizeof(Robot));

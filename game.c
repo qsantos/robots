@@ -70,3 +70,13 @@ bool RobotCollideRobot(Robot* a, Robot* b)
 		RobotCollidePoint(a, b->x - wx + hx, b->y - wy + hy) ||
 		RobotCollidePoint(a, b->x + wx + hx, b->y + wy + hy) ;
 }
+
+float distance(float x1, float y1, float x2, float y2)
+{
+	return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
+float angle(float x1, float y1, float x2, float y2)
+{
+	return atan2f(x2-x1, y1-y2);
+}

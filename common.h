@@ -61,13 +61,33 @@ static inline void* my_assert(void* ptr, const char* file, unsigned int line)
 #define PACKED __attribute__((packed))
 
 #define PI (3.14159265358979323846)
-static inline float deg2rad(float t)
+// positive float mod
+inline float pfmod(float x, float m)
 {
-	return fmod(t, 360) * PI / 180.0;
+	return m ? x - m*floor(x/m) : x;
 }
-static inline float rad2deg(float t)
+// centered float mod
+inline float cfmod(float x, float m)
 {
-	return fmod(t, 2*PI) * 180.0 / PI;
+	return pfmod(x+m/2, m)-m/2;
+}
+
+inline float normRad(float a)
+{
+	return cfmod(a, 2*PI);
+}
+inline float normDeg(float a)
+{
+	return cfmod(a, 360);
+}
+
+inline float deg2rad(float a)
+{
+	return normRad(a * PI / 180.0);
+}
+inline float rad2deg(float a)
+{
+	return normDeg(a * 180.0 / PI);
 }
 
 #endif

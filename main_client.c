@@ -49,6 +49,7 @@ void handleEvents()
 	{
 		case E_TICK:
 		{
+/*
 			static struct timeb last = { 0, 0, 0, 0 };
 			struct timeb cur;
 			ftime(&cur);
@@ -58,16 +59,20 @@ void handleEvents()
 				Order_Fire(10);
 				last = cur;
 			}
+*/
 			break;
 		}
 		case E_DUMP:
 			read(server, &robot, sizeof(Robot));
 			break;
-		case E_SPOTTED:
+		case E_ROBOT:
 			read(server, &r, sizeof(Robot));
+			Order_Fire(10);
 			break;
 		case E_BULLET:
 			read(server, &b, sizeof(Bullet));
+			if (b.from != robot.id)
+				Order_Advance(-100);
 			break;
 		case E_HIT:
 			read(server, &b, sizeof(Bullet));

@@ -29,17 +29,17 @@ static const u8 START_MESSAGE  = 0x42;
 
 typedef enum
 {
-	O_ADVANCE = 0x01,
-	O_TURN    = 0x02,
-	O_TURNGUN = 0x03,
-	O_FIRE    = 0x04,
+	O_ADVANCE  = 0x01,
+	O_TURN     = 0x02,
+	O_TURNGUN  = 0x03,
+	O_FIRE     = 0x04,
 } OrderCode;
 
 typedef enum
 {
 	E_TICK     = 0x01,
 	E_DUMP     = 0x02,
-	E_SPOTTED  = 0x03,
+	E_ROBOT    = 0x03,
 	E_BULLET   = 0x04,
 	E_HIT      = 0x05,
 	E_HITBY    = 0x06,
@@ -90,5 +90,25 @@ bool GameContainsPoint(Game*, float, float);
 bool GameContainsRobot(Game*, Robot*);
 bool RobotCollidePoint(Robot*, float, float);
 bool RobotCollideRobot(Robot*, Robot*);
+
+float distance(float, float, float, float);
+float angle   (float, float, float, float);
+
+inline float distanceRobots(Robot* a, Robot* b)
+{
+	return distance(a->x, a->y, b->x, b->y);
+}
+inline float angleRobots(Robot* a, Robot* b)
+{
+	return angle(a->x, a->y, b->x, b->y);
+}
+inline float distanceBullet(Robot* r, Bullet* b)
+{
+	return distance(r->x, r->y, b->x, b->y);
+}
+inline float angleBullet(Robot* r, Bullet* b)
+{
+	return angle(r->x, r->y, b->x, b->y);
+}
 
 #endif
