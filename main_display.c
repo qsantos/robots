@@ -27,6 +27,7 @@
 #include "socket.h"
 #include "game.h"
 #include "allocateArray.h"
+#include "simpleOGG.h"
 
 #define GLUT_KEY_ESC    (27)
 #define GLUT_WHEEL_UP   (3)
@@ -376,6 +377,8 @@ int main(int argc, char** argv)
 	}
 	printf("Connected\n");
 
+	StartMusic(&argc, argv, "music/waiting.ogg");
+
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);
 	winId = glutCreateWindow("Robot battle");
@@ -396,6 +399,8 @@ int main(int argc, char** argv)
 	
 	pthread_cancel(listenerThread);
 	pthread_join(listenerThread, NULL);
+
+	StopMusic();
 
 	FREE(, explosions);
 	free(bullet);
