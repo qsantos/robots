@@ -1,3 +1,17 @@
+#!/bin/sh
+for i in $(ls *.h *.c)
+do
+	line=$(grep -Enm1 '^\\\*/' $i | awk -F: '{print $1;}') # length of the previous header
+	grep -E "^.\*" header > tmp # new header for the file (extracted from this script)
+	if [ -z $line ]
+	then
+		cat $i >> tmp
+	else
+		tail $i -n+$(($line + 1)) >> tmp
+	fi
+	mv tmp $i
+done
+exit 0
 /*\
  *  This is an awesome programm simulating awesome battles of awesome robot tanks
  *  Copyright (C) 2012  Thomas GREGOIRE, Quentin SANTOS
