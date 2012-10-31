@@ -47,20 +47,12 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 	}
 }
 
-Server* Server_New(string interface, u16 port, u32 n_clients)
+Server* Server_New(int socket, u32 n_clients)
 {
 	Server* ret = ALLOC(Server, 1);
 
-	printf("Listening on %s:%u\n", interface, port);
-	printf("Waiting for %lu clients\n", n_clients);
-	ret->listener = TCP_ListenTo(interface, port);
-	if (ret->listener < 0)
-	{
-		fprintf(stderr, "The server could not bind the adequate port\n");
-		return NULL;
-	}
-
-	ret->clients        = ALLOC(s32, n_clients);
+	ret->listener       = socket;
+	ret->clients        = ALLOC(int, n_clients);
 	ret->game.width     = 1000;
 	ret->game.height    = 1000;
 	ret->game.n_slots   = n_clients;
@@ -111,6 +103,7 @@ void Server_AcceptDisplay(Server* s)
 {
 	assert(s);
 	s->display = TCP_Accept(s->listener);
+	printf("Display accepted\n");
 	int flags = fcntl(s->display, F_GETFL, 0);
 	fcntl(s->display, F_SETFL, flags | O_NONBLOCK);
 }
@@ -119,9 +112,11 @@ void Server_AcceptClients(Server* s)
 {
 	assert(s);
 
+	printf("Waiting for %lu clients\n", s->game.n_slots);
 	for (u32 i = 0; i < s->game.n_slots; i++)
 	{
 		s->clients[i] = TCP_Accept(s->listener);
+		printf("One client accepted\n");
 		s->game.n_clients++;
 
 		u8 hello[2];
@@ -373,8 +368,8 @@ void Server_Loop(Server* s)
 	struct epoll_event events[10];
 	while (42)
 	{
-		int n_events = epoll_wait(epollfd, events, 10, 1000 / FRAMERATE);
-		for (s32 i = 0; i < n_events; i++)
+		u32 n_events = epoll_wait(epollfd, events, 10, 1000 / FRAMERATE);
+		for (u32 i = 0; i < n_events; i++)
 		{
 			u32 client = events[i].data.u32;
 			while (Server_HandleOrder(s, client));

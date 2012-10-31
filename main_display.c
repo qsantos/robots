@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#include <ctype.h>
 #include <GL/freeglut.h>
 #include <fcntl.h>
 #include <SOIL/SOIL.h>
@@ -67,7 +66,7 @@ static int   mouseY    = 0;
 static float zoom      = 1;
 
 static struct timeb lastDraw;
-static s32     server;
+static int     server;
 static Game    game;
 static u32     n_robots     = 0;
 static u32     a_robots     = 0;
@@ -344,7 +343,7 @@ void usage(int argc, char** argv)
 	(void) argc;
 	printf
 	(
-		"Usage: %s [ADDRESS] [PORT]\n"
+		"Usage: %s [ADDRESS [PORT]]\n"
 		"\n"
 		"  ADDRESS  the address of the game server\n"
 		"  PORT     the port to connect to\n"
@@ -355,18 +354,18 @@ void usage(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	char* address = argc > 1 ? argv[1]             : "127.0.0.1";
-	u16   port    = argc > 2 ? (u32) atoi(argv[2]) : 4242;
+	const char* node    = argc > 1 ? argv[1] : "::1";
+	const char* service = argc > 2 ? argv[2] : "4242";
 
-//	usage(); // TODO: check port and IP
-
-	printf("Connecting to %s:%lu\n", address, port);
-	server = TCP_Connect(address, port);
+	printf("Connecting to %s port %s\n", node, service);
+	server = TCP_Connect(node, service);
 	if (server < 0)
 	{
 		fprintf(stderr, "Could not connect to the server\n");
+		usage(argc, argv);
 		exit(1);
 	}
+	printf("Connected\n");
 
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);

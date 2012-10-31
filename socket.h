@@ -19,12 +19,9 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-typedef unsigned short int Port;
-typedef          long  int Socket;
-
-Socket TCP_Connect (const char*, Port);
-Socket TCP_ListenTo(const char*, Port);
-Socket TCP_Listen  (Port);
-Socket TCP_Accept  (Socket);
+int TCP_Connect (const char*, const char*);
+int TCP_ListenTo(const char*, const char*);
+int TCP_Listen  (const char*);
+int TCP_Accept  (int);
 
 #endif

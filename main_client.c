@@ -16,14 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#include <ctype.h>
 #include <unistd.h>
 #include <sys/timeb.h>
 
 #include "socket.h"
 #include "game.h"
 
-s32   server = 0;
+int   server = 0;
 Robot robot;
 
 #define ORDER(Name, CODE)                     \
@@ -92,20 +91,34 @@ void handleEvents()
 	}
 }
 
+void usage(int argc, char** argv)
+{
+	(void) argc;
+	printf
+	(
+		"Usage: %s [ADDRESS [PORT]]\n"
+		"\n"
+		"  ADDRESS  the node of the game server\n"
+		"  PORT     the port to connect to\n"
+		,
+		argv[0]
+	);
+}
+
 int main(int argc, char** argv)
 {
-	char* address = argc > 1 ? argv[1]             : "127.0.0.1";
-	u16   port    = argc > 2 ? (u32) atoi(argv[2]) : 4242;
+	const char* node    = argc > 1 ? argv[1] : "::1";
+	const char* service = argc > 2 ? argv[2] : "4242";
 
-//	usage(); // TODO: check port and IP
-
-	printf("Connecting to %s:%lu\n", address, port);
-	server = TCP_Connect(address, port);
+	printf("Connecting to %s port %s\n", node, service);
+	server = TCP_Connect(node, service);
 	if (server < 0)
 	{
 		fprintf(stderr, "Could not connect to the server\n");
+		usage(argc, argv);
 		exit(1);
 	}
+	printf("Connected\n");
 
 	write(server, &MAGIC_WORD,     sizeof(u8));
 	write(server, &VERSION_NUMBER, sizeof(u8));

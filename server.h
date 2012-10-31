@@ -24,9 +24,9 @@
 
 typedef struct
 {
-	s32     listener;
-	s32     display;
-	s32*    clients;
+	int     listener;
+	int     display;
+	int*    clients;
 
 	Game    game;
 
@@ -34,7 +34,7 @@ typedef struct
 	DEF(Bullet, bullets)
 } Server;
 
-Server* Server_New          (string, u16, u32);
+Server* Server_New          (int, u32);
 void    Server_Delete       (Server*);
 void    Server_Debug        (Server*);
 void    Server_AcceptDisplay(Server*);

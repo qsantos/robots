@@ -19,71 +19,86 @@
 #include "socket.h"
 
 #include <string.h>
-#include <arpa/inet.h>
 #include <unistd.h>
+#include <netdb.h>
 
-Socket TCP_Connect(const char* IP, Port port)
+int TCP_Connect(const char* node, const char* service)
 {
-	Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (sock < 0)
-		return -1;
+// see getaddrinfo(2)
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
 
-	struct sockaddr_in host;
-	memset(&host, 0, sizeof(struct sockaddr_in));
-	inet_pton(AF_INET, IP, &host.sin_addr);
-	host.sin_family = AF_INET;
-	host.sin_port   = htons(port);
+	struct addrinfo* result;
+	getaddrinfo(node, service, &hints, &result);
 
-	Socket res = connect(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
-	if (res < 0)
+	int sock;
+	struct addrinfo* cur = result;
+	while (cur)
 	{
+		sock = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol);
+		if (sock == -1)
+			continue;
+
+		if (connect(sock, cur->ai_addr, cur->ai_addrlen) != -1)
+			break;
+
 		close(sock);
-		return -1;
+		cur = cur->ai_next;
 	}
 
+	if (!result)
+		sock = -1;
+	freeaddrinfo(result);
 	return sock;
 }
 
-Socket TCP_ListenTo(const char* IP, Port port)
+int TCP_ListenTo(const char* node, const char* service)
 {
-	Socket sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (sock < 0)
+// see getaddrinfo(2)
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	struct addrinfo* result;
+	if (getaddrinfo(node, service, &hints, &result))
 		return -1;
 
-	struct sockaddr_in host;
-	memset(&host, 0, sizeof(struct sockaddr_in));
-	inet_pton(AF_INET, IP, &host.sin_addr);
-	host.sin_family = AF_INET;
-	host.sin_port   = htons(port);
-
-	int v = 1;
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(int));
-
-	Socket res = bind(sock, (struct sockaddr*)&host, sizeof(struct sockaddr));
-	if (res < 0)
+	int sock;
+	struct addrinfo* cur = result;
+	while (cur)
 	{
+		sock = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol);
+		if (sock == -1)
+			continue;
+
+		int v = 1;
+		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(int));
+
+		if (bind(sock, cur->ai_addr, cur->ai_addrlen) != -1 && listen(sock, 10) != -1)
+			break;
+
 		close(sock);
-		return -1;
+		cur = cur->ai_next;
 	}
 
-	res = listen(sock, 10);
-	if (res < 0)
-	{
-		close(sock);
-		return -1;
-	}
-
+	if (!result)
+		sock = -1;
+	freeaddrinfo(result);
 	return sock;
 }
 
-Socket TCP_Listen(Port port)
+int TCP_Listen(const char* port)
 {
-	return TCP_ListenTo("0.0.0.0", port);
+	return TCP_ListenTo(NULL, port);
 }
 
-Socket TCP_Accept(Socket sock)
+int TCP_Accept(int sock)
 {
-	Socket client = accept(sock, NULL, NULL);
+	int client = accept(sock, NULL, NULL);
 	if (client < 0)
 		return -1;
 

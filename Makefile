@@ -2,7 +2,7 @@ OFILES_CLIENT  = socket.o main_client.o
 OFILES_SERVER  = socket.o main_server.o server.o game.o
 OFILES_DISPLAY = socket.o main_display.o game.o
 
-CFLAGS  = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500 -g
+CFLAGS  = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500
 LDFLAGS = -lm
 
 all: client server display
