@@ -1,26 +1,19 @@
-OFILES_CLIENT  = socket.o main_client.o
-OFILES_SERVER  = socket.o main_server.o server.o game.o
-OFILES_DISPLAY = socket.o main_display.o game.o
-
-CFLAGS  = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500
-LDFLAGS = -lm
-
 all: client server display
 
-client: $(OFILES_CLIENT)
-	gcc $(LDFLAGS) $^ -o $@
+client: socket.o main_client.o
+	gcc $^ -o $@
 
-server: $(OFILES_SERVER)
-	gcc $(LDFLAGS) $^ -o $@
+server: socket.o main_server.o server.o game.o
+	gcc -lm $^ -o $@
 
-display: $(OFILES_DISPLAY)
-	gcc $(LDFLAGS) -lGL -lglut -lSOIL $^ -o $@
+display: socket.o main_display.o
+	gcc -lGL -lglut -lSOIL $^ -o $@
 
 %.o: %.c
-	gcc $(CFLAGS) -c $<
+	gcc -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500 -c $<
 
 clean:
-	rm -f $(OFILES_SERVER) $(OFILES_CLIENT) $(OFILES_DISPLAY)
+	rm -f *.o
 
 destroy: clean
 	rm -f client server display
