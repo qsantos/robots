@@ -27,7 +27,7 @@ int TCP_Connect(const char* node, const char* service)
 // see getaddrinfo(2)
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family   = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
 	struct addrinfo* result;
@@ -59,9 +59,9 @@ int TCP_ListenTo(const char* node, const char* service)
 // see getaddrinfo(2)
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family   = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+	hints.ai_flags    = AI_PASSIVE;
 
 	struct addrinfo* result;
 	if (getaddrinfo(node, service, &hints, &result))

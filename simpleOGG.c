@@ -71,7 +71,8 @@ void StartMusic(int* argc, char** argv, const char* filename)
 	alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
 	alGenSources(1, &sourceID);
 	alSource3f(sourceID, AL_POSITION, 0.0f, 0.0f, 0.0f);
-	alSourcei(sourceID, AL_BUFFER, bufferID);
+	alSourcei (sourceID, AL_BUFFER,   bufferID);
+	alSourcei (sourceID, AL_LOOPING,  AL_TRUE);
 
 	alSourcePlay(sourceID);
 }
