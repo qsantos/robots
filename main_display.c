@@ -41,6 +41,7 @@ static inline float max(float a, float b)
 typedef enum
 {
 	TEX_GROUND,
+	TEX_BACK,
 	TEX_CHASSIS,
 	TEX_GUN,
 	TEX_EXPLOSION,
@@ -49,7 +50,8 @@ typedef enum
 
 static const char* tex_name  [TEX_NB] =
 {
-	"img/grass.png",
+	"img/glass.png",
+	"img/back.png",
 	"img/chassis.png",
 	"img/gun.png",
 	"img/explosion.png",
@@ -167,16 +169,20 @@ void* listener(void* params)
 	return NULL;
 }
 
-void drawTexture(Texture tex, float width, float height)
+static void drawRepeatTexture(Texture tex, float width, float height, float nx, float ny)
 {
 	glBindTexture(GL_TEXTURE_2D, texture[tex]);
 		glBegin(GL_QUADS);
-			glTexCoord2f(0.0, 1.0); glVertex2f(- width / 2, - height / 2);
-			glTexCoord2f(1.0, 1.0); glVertex2f(  width / 2, - height / 2);
-			glTexCoord2f(1.0, 0.0); glVertex2f(  width / 2,   height / 2);
+			glTexCoord2f(0.0, ny);  glVertex2f(- width / 2, - height / 2);
+			glTexCoord2f(nx,  ny);  glVertex2f(  width / 2, - height / 2);
+			glTexCoord2f(nx,  0.0); glVertex2f(  width / 2,   height / 2);
 			glTexCoord2f(0.0, 0.0); glVertex2f(- width / 2,   height / 2);
 		glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+static inline void drawTexture(Texture tex, float width, float height)
+{
+	drawRepeatTexture(tex, width, height, 1, 1);
 }
 #define TEXT_BUFFER (1024)
 #define TEXT_FONT   GLUT_STROKE_ROMAN
@@ -259,7 +265,8 @@ void cb_displayFunc()
 
 	glPushMatrix();
 		glTranslatef(game.width / 2, game.height / 2, 0);
-		drawTexture(TEX_GROUND, game.width, game.height);
+		drawTexture      (TEX_BACK,   game.width, game.height);
+		drawRepeatTexture(TEX_GROUND, game.width, game.height, game.width/100, game.height/100);
 	glPopMatrix();
 
 	FOREACH(, explosions, i)
@@ -331,6 +338,8 @@ void glInit()
 		abort();
 
 		glBindTexture(GL_TEXTURE_2D, texture[i]);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width[i]);
