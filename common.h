@@ -19,9 +19,7 @@
 #ifndef COMMON_H 
 #define COMMON_H 
 
-#define XOPEN_SOURCE 600
 #include <math.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -31,36 +29,36 @@ typedef unsigned char  u8;
 typedef unsigned short u16;
 typedef unsigned long  u32;
 
-typedef signed char    s8;
-typedef signed short   s16;
-typedef signed long    s32;
-
-typedef char*          string;
+typedef signed   char  s8;
+typedef signed   short s16;
+typedef signed   long  s32;
 
 static const u8 false = 0;
 static const u8 true  = 1;
 typedef u8 bool;
 
+
 /* MEMORY MANAGEMENT */
 
-static inline void* my_assert(void* ptr, const char* file, unsigned int line)
+inline void* mrealloc(void* ptr, size_t size, const char* file, unsigned int line)
 {
-	if (!ptr)
+	void* ret = realloc(ptr, size);
+	if (!ret)
 	{
-		fprintf(stderr, "alloc failed, file %s, line %u\n", file, line);
-		abort();
+		fprintf(stderr, "mrealloc failed at %s:%u\n", file, line);
+		exit(1);
 	}
-	return ptr;
+	return ret;
 }
 
-#define ALLOC(t,n)       (t*) my_assert(malloc(sizeof(t) * (n)),       __FILE__, __LINE__)
-#define REALLOC(ptr,t,n) (t*) my_assert(realloc(ptr, sizeof(t) * (n)), __FILE__, __LINE__)
+#define MALLOC(T,N)      (T*) mrealloc(NULL, sizeof(T) * (N), __FILE__, __LINE__)
+#define REALLOC(PTR,T,N) (T*) mrealloc(PTR,  sizeof(T) * (N), __FILE__, __LINE__)
 
-/* DIRTY STUFF */
 
-#define PACKED __attribute__((packed))
+/* TRIGONOMETRY */
 
 #define PI (3.14159265358979323846)
+
 // positive float mod
 inline float pfmod(float x, float m)
 {
@@ -72,15 +70,18 @@ inline float cfmod(float x, float m)
 	return pfmod(x+m/2, m)-m/2;
 }
 
+// maps angle to [-PI, PI[
 inline float normRad(float a)
 {
 	return cfmod(a, 2*PI);
 }
+// maps angle to [-180, 180[
 inline float normDeg(float a)
 {
 	return cfmod(a, 360);
 }
 
+// angle conversion
 inline float deg2rad(float a)
 {
 	return normRad(a * PI / 180.0);

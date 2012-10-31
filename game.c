@@ -17,6 +17,7 @@
 \*/
 
 #include "game.h"
+#include "assert.h"
 
 bool GameContainsPoint(Game* g, float x, float y)
 {

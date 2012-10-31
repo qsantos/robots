@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "socket.h"
 
@@ -49,10 +50,10 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 
 Server* Server_New(int socket, u32 n_clients)
 {
-	Server* ret = ALLOC(Server, 1);
+	Server* ret = MALLOC(Server, 1);
 
 	ret->listener       = socket;
-	ret->clients        = ALLOC(int, n_clients);
+	ret->clients        = MALLOC(int, n_clients);
 	ret->game.width     = 1000;
 	ret->game.height    = 1000;
 	ret->game.n_slots   = n_clients;

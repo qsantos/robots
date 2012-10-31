@@ -48,13 +48,13 @@ typedef enum
 	E_KABOUM   = 0x09,
 } EventCode;
 
-typedef struct PACKED
+typedef struct __attribute__((packed))
 {
 	OrderCode code;
 	float     param;
 } Order;
 
-typedef struct PACKED
+typedef struct __attribute__((packed))
 {
 	float height;
 	float width;
@@ -62,7 +62,7 @@ typedef struct PACKED
 	u32   n_clients;
 } Game;
 
-typedef struct PACKED
+typedef struct __attribute__((packed))
 {
 	u32   id;
 	float x;
@@ -77,7 +77,7 @@ typedef struct PACKED
 	float turnGunSpeed;
 } Robot;
 
-typedef struct PACKED
+typedef struct __attribute__((packed))
 {
 	u32   from;
 	float x;

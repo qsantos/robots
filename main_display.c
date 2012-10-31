@@ -17,12 +17,12 @@
 \*/
 
 #include <GL/freeglut.h>
-#include <fcntl.h>
 #include <SOIL/SOIL.h>
 #include <unistd.h>
 #include <sys/timeb.h>
 #include <string.h>
 #include <pthread.h>
+#include <assert.h>
 
 #include "socket.h"
 #include "game.h"
@@ -198,7 +198,7 @@ void drawRobot(Robot* r)
 
 	glPushMatrix();
 		unsigned char glText[TEXT_BUFFER];
-		snprintf((string)glText, TEXT_BUFFER, "%f", r->energy);
+		snprintf((char*)glText, TEXT_BUFFER, "%f", r->energy);
 		float textWidth = glutStrokeLength(TEXT_FONT, glText);
 		float maxdim = max(r->height, r->width);
 		float scale = maxdim / textWidth;
