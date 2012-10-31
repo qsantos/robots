@@ -19,8 +19,9 @@
 #ifndef SIMPLEOGG_H
 #define SIMPLEOGG_H
 
-unsigned int LoadOGG   (const char*);
-void         StartMusic(int*, char**, const char*);
-void         StopMusic ();
+void LoadOGG(const char*, unsigned int);
+void AL_Init(int*,        char**);
+void AL_Play(const char*, bool);
+void AL_Exit();
 
 #endif

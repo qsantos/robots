@@ -151,6 +151,7 @@ void handleEvent()
 		break;
 	case E_KABOUM:
 		read(server, &r,  sizeof(Robot));
+
 		u32 i;
 		ENABLE(, Explosion, explosions, i);
 		Explosion* e = &explosions[i];
@@ -158,6 +159,8 @@ void handleEvent()
 		e->y       = r.y;
 		e->curTime = 0;
 		e->radius  = (r.width + r.height) / 4;
+
+		AL_Play("music/explosion.ogg", 0);
 		break;
 	}
 }
@@ -377,7 +380,8 @@ int main(int argc, char** argv)
 	}
 	printf("Connected\n");
 
-	StartMusic(&argc, argv, "music/waiting.ogg");
+	AL_Init(&argc, argv);
+	AL_Play("music/waiting.ogg", 1);
 
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);
@@ -396,11 +400,12 @@ int main(int argc, char** argv)
 
 	glInit();
 	glutMainLoop();
-	
+
+	printf("Terminating\n");
 	pthread_cancel(listenerThread);
 	pthread_join(listenerThread, NULL);
 
-	StopMusic();
+	AL_Exit();
 
 	FREE(, explosions);
 	free(bullet);

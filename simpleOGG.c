@@ -22,7 +22,9 @@
 #include <AL/alut.h>
 #include <vorbis/vorbisfile.h>
 
-ALuint LoadOGG(const char* filename)
+#include "common.h"
+
+void LoadOGG(const char* filename, ALuint bufferID)
 {
 	FILE* f = fopen(filename, "r"); assert(f);
 	OggVorbis_File oggFile;
@@ -54,35 +56,64 @@ ALuint LoadOGG(const char* filename)
 
 	ov_clear(&oggFile);
 
-	ALuint bufferID;
-	alGenBuffers(1, &bufferID);
 	alBufferData(bufferID, format, buffer, size, freq);
 	free(buffer);
-	return bufferID;
 }
 
-ALuint sourceID;
-ALuint bufferID;
-void StartMusic(int* argc, char** argv, const char* filename)
+void AL_Init(int* argc, char** argv)
 {
 	alutInit(argc, argv);
-	bufferID = LoadOGG(filename);
-
 	alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
-	alGenSources(1, &sourceID);
-	alSource3f(sourceID, AL_POSITION, 0.0f, 0.0f, 0.0f);
-	alSourcei (sourceID, AL_BUFFER,   bufferID);
-	alSourcei (sourceID, AL_LOOPING,  AL_TRUE);
-
-	alSourcePlay(sourceID);
 }
 
-void StopMusic()
+ALuint* sources  = NULL;
+ALuint* buffers  = NULL;
+u32     n_sounds = 0;
+u32     a_sounds = 0;
+void AL_Play(const char* filename, char loop)
 {
-	alSourceStop(sourceID);
+	s32 soundID = -1;
+	for (u32 i = 0; i < n_sounds; i++)
+	{
+		ALint state;
+		alGetSourcei(sources[i], AL_SOURCE_STATE, &state);
+		if (state == AL_STOPPED)
+		{
+			soundID = i;
+			break;
+		}
+	}
+	if (soundID < 0)
+	{
+		if (n_sounds >= a_sounds)
+		{
+			a_sounds = a_sounds ? 2*a_sounds : 1;
+			sources = REALLOC(sources, ALuint, a_sounds);
+			buffers = REALLOC(buffers, ALuint, a_sounds);
+		}
+		alGenSources(1, &sources[n_sounds]);
+		ALuint sourceID = sources[n_sounds];
+		alSource3f(sourceID, AL_POSITION, 0.0f, 0.0f, 0.0f);
+		alSourcei(sourceID, AL_LOOPING, loop);
 
-	alDeleteBuffers(1, &bufferID);
-	alDeleteSources(1, &sourceID);
+		alGenBuffers(1, &buffers[n_sounds]);
+
+		soundID = n_sounds++;
+	}
+
+	LoadOGG(filename, buffers[soundID]);
+	alSourcei(sources[soundID], AL_BUFFER, buffers[soundID]);
+	alSourcePlay(sources[soundID]);
+}
+
+void AL_Exit()
+{
+	for (u32 i = 0; i < n_sounds; i++)
+	{
+		alSourceStop(sources[i]);
+		alDeleteBuffers(1, &buffers[i]);
+		alDeleteSources(1, &sources[i]);
+	}
 
 	ALCcontext* context = alcGetCurrentContext();
 	ALCdevice* device = alcGetContextsDevice(NULL);
