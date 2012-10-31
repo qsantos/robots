@@ -1,6 +1,6 @@
 /*\
  *  This is an awesome programm simulating awesome battles of awesome robot tanks
- *  Copyright (C) 2012  Thomas GREGOIRE, Quentin SANTOS
+ *  Copyright (C) 2012  Quentin SANTOS
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
