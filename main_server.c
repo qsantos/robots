@@ -20,40 +20,37 @@
 
 #include "server.h"
 
+void usage(int argc, char** argv)
+{
+	(void) argc;
+	printf
+	(
+		"Usage : %s [OPTION]...\n"
+		"\n"
+		"  -n n_clients  sets the number of slots for client robots\n"
+		"  -i interface  sets the interface to listen to\n"
+		"  -p port       sets the port number to listen to\n"
+		,
+		argv[0]
+	);
+}
+
 int main(int argc, char** argv)
 {
 	char* interface = "127.0.0.1";
 	u32   port      = 4242;
 	u32   n_clients = 2;
 
-	opterr = 0;
 	int c;
-	while ((c = getopt(argc, argv, "i:n:p:")) != -1)
+	opterr = 0;
+	while ((c = getopt(argc, argv, "n:i:p:")) != -1)
 		switch (c)
 		{
-		case 'i':
-			interface = optarg;
-			break;
-
-		case 'n':
-			n_clients = (u32) atoi(optarg);
-			break;
-
-		case 'p':
-			port = (u32) atoi(optarg);
-			break;
-
-		case '?':
-			if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
-				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-			else if (isprint(optopt))
-				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-			else
-				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-			return 1;
-
-		default:
-			abort();
+		case 'n': n_clients = (u32) atoi(optarg); break;
+		case 'i': interface = optarg;             break;
+		case 'p': port      = (u32) atoi(optarg); break;
+		case '?': usage(argc, argv); exit(1);
+		default:  exit(1);
 		}
 
 	Server* server = Server_New(interface, port, n_clients);

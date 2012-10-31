@@ -339,42 +339,33 @@ void glInit()
 	}
 }
 
+void usage(int argc, char** argv)
+{
+	(void) argc;
+	printf
+	(
+		"Usage: %s [ADDRESS] [PORT]\n"
+		"\n"
+		"  ADDRESS  the address of the game server\n"
+		"  PORT     the port to connect to\n"
+		,
+		argv[0]
+	);
+}
+
 int main(int argc, char** argv)
 {
-	char* interface = "127.0.0.1";
-	u16   port      = 4242;
+	char* address = argc > 1 ? argv[1]             : "127.0.0.1";
+	u16   port    = argc > 2 ? (u32) atoi(argv[2]) : 4242;
 
-	opterr = 0;
-	int c;
-	while ((c = getopt(argc, argv, "i:p:")) != -1)
-		switch (c)
-		{
-		case 'i':
-			interface = optarg;
-			break;
+//	usage(); // TODO: check port and IP
 
-		case 'p':
-			port = (u32) atoi(optarg);
-			break;
-
-		case '?':
-			if ((optopt == 'i') || (optopt == 'n') || (optopt == 'p'))
-				fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-			else if (isprint(optopt))
-				fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-			else
-				fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
-			return 1;
-
-		default:
-			abort();
-		}
-
-	server = TCP_Connect(interface, port);
+	printf("Connecting to %s:%lu\n", address, port);
+	server = TCP_Connect(address, port);
 	if (server < 0)
 	{
 		fprintf(stderr, "Could not connect to the server\n");
-		abort();
+		exit(1);
 	}
 
 	glutInit(&argc, argv);
