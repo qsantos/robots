@@ -3,7 +3,7 @@ all: client server display
 client: socket.o main_client.o client.o
 	gcc $^ -o $@
 
-server: socket.o main_server.o server.o game.o
+server: socket.o main_server.o server.o math.o
 	gcc -lm $^ -o $@
 
 display: socket.o simpleOGG.o main_display.o

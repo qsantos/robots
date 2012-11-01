@@ -26,6 +26,7 @@
 
 #include "socket.h"
 #include "game.h"
+#include "math.h"
 #include "allocateArray.h"
 #include "simpleOGG.h"
 

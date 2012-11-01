@@ -54,41 +54,4 @@ inline void* mrealloc(void* ptr, size_t size, const char* file, unsigned int lin
 #define MALLOC(T,N)      (T*) mrealloc(NULL, sizeof(T) * (N), __FILE__, __LINE__)
 #define REALLOC(PTR,T,N) (T*) mrealloc(PTR,  sizeof(T) * (N), __FILE__, __LINE__)
 
-
-/* TRIGONOMETRY */
-
-#define PI (3.14159265358979323846)
-
-// positive float mod
-inline float pfmod(float x, float m)
-{
-	return m ? x - m*floor(x/m) : x;
-}
-// centered float mod
-inline float cfmod(float x, float m)
-{
-	return pfmod(x+m/2, m)-m/2;
-}
-
-// maps angle to [-PI, PI[
-inline float normRad(float a)
-{
-	return cfmod(a, 2*PI);
-}
-// maps angle to [-180, 180[
-inline float normDeg(float a)
-{
-	return cfmod(a, 360);
-}
-
-// angle conversion
-inline float deg2rad(float a)
-{
-	return normRad(a * PI / 180.0);
-}
-inline float rad2deg(float a)
-{
-	return normDeg(a * 180.0 / PI);
-}
-
 #endif

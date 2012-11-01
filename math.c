@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
-#include "game.h"
-#include "assert.h"
+#include "math.h"
 
 bool GameContainsPoint(Game* g, float x, float y)
 {
@@ -43,8 +42,6 @@ inline static float dot(float x0, float y0, float x1, float y1)
 }
 bool RobotCollidePoint(Robot* r, float x, float y)
 {
-	assert(r);
-
 	float vx = x - r->x;
 	float vy = y - r->y;
 	float wx =   r->width  / 2 * cos(r->angle);
@@ -58,9 +55,6 @@ bool RobotCollidePoint(Robot* r, float x, float y)
 
 bool RobotCollideRobot(Robot* a, Robot* b)
 {
-	assert(a);
-	assert(b);
-
 	float wx =   b->width  / 2 * cos(b->angle);
 	float wy =   b->width  / 2 * sin(b->angle);
 	float hx = - b->height / 2 * sin(b->angle);

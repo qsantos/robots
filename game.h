@@ -90,29 +90,4 @@ typedef struct __attribute__((packed))
 	float energy;
 } Bullet;
 
-bool GameContainsPoint(Game*, float, float);
-bool GameContainsRobot(Game*, Robot*);
-bool RobotCollidePoint(Robot*, float, float);
-bool RobotCollideRobot(Robot*, Robot*);
-
-float distance(float, float, float, float);
-float angle   (float, float, float, float);
-
-inline float distanceRobots(Robot* a, Robot* b)
-{
-	return distance(a->x, a->y, b->x, b->y);
-}
-inline float angleRobots(Robot* a, Robot* b)
-{
-	return angle(a->x, a->y, b->x, b->y);
-}
-inline float distanceBullet(Robot* r, Bullet* b)
-{
-	return distance(r->x, r->y, b->x, b->y);
-}
-inline float angleBullet(Robot* r, Bullet* b)
-{
-	return angle(r->x, r->y, b->x, b->y);
-}
-
 #endif
