@@ -30,7 +30,7 @@ void cbRobot(Robot* robot, Robot* r)
 {
 	(void) robot;
 	(void) r;
-	Order_Fire(10);
+	Order_Fire(1);
 }
 
 void cbBullet(Robot* robot, Bullet* b)

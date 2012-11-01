@@ -52,12 +52,10 @@ Server* Server_New(int socket, u32 n_clients)
 {
 	Server* ret = MALLOC(Server, 1);
 
-	ret->listener       = socket;
-	ret->clients        = MALLOC(int, n_clients);
-	ret->game.width     = 1000;
-	ret->game.height    = 1000;
-	ret->game.n_slots   = n_clients;
-	ret->game.n_clients = 0;
+	ret->listener = socket;
+	ret->clients  = MALLOC(int, n_clients);
+	Game g = {1000, 1000, 100, 30, 90, -1, n_clients, 0};
+	ret->game = g;
 
 	INIT(ret->, robots);
 	INIT(ret->, bullets);
@@ -139,22 +137,30 @@ bool Server_HandleOrder(Server* s, u32 id)
 		return false;
 
 	Robot* r = &s->robots[id];
+	float max;
 	switch (order.code)
 	{
 	case O_ADVANCE:
-		r->velocity = order.param;
+		max = s->game.max_velocity;
+		if (max < 0 || fabs(order.param) <= max)
+			r->velocity = order.param;
 		break;
 
 	case O_TURN:
-		r->turnSpeed = order.param;
+		max = s->game.max_turnSpeed;
+		if (max < 0 || fabs(order.param) <= max)
+			r->turnSpeed = order.param;
 		break;
 
 	case O_TURNGUN:
-		r->turnGunSpeed = order.param;
+		max = s->game.max_turnGunSpeed;
+		if (max < 0 || fabs(order.param) <= max)
+			r->turnGunSpeed = order.param;
 		break;
 
 	case O_FIRE:
-		if (r->energy >= order.param)
+		max = s->game.max_fireEnergy;
+		if ((max < 0 || order.param <= max) && r->energy >= order.param)
 		{
 			r->energy -= order.param;
 			// don't merge the next lines: ENABLE may change s->bullets pointer

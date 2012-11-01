@@ -58,6 +58,10 @@ typedef struct __attribute__((packed))
 {
 	float height;
 	float width;
+	float max_velocity;
+	float max_turnSpeed;
+	float max_turnGunSpeed;
+	float max_fireEnergy;
 	u32   n_slots;
 	u32   n_clients;
 } Game;
