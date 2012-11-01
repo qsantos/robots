@@ -66,10 +66,10 @@ void AL_Init(int* argc, char** argv)
 	alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
 }
 
-ALuint* sources  = NULL;
-ALuint* buffers  = NULL;
-u32     n_sounds = 0;
-u32     a_sounds = 0;
+static ALuint* sources  = NULL;
+static ALuint* buffers  = NULL;
+static u32     n_sounds = 0;
+static u32     a_sounds = 0;
 void AL_Play(const char* filename, char loop)
 {
 	s32 soundID = -1;

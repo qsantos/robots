@@ -10,7 +10,7 @@ display: socket.o simpleOGG.o main_display.o
 	gcc -lGL -lglut -lSOIL -lalut -lvorbisfile $^ -o $@
 
 %.o: %.c
-	gcc -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500 -c $<
+	gcc -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=700 -c $<
 
 clean:
 	rm -f *.o

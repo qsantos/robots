@@ -22,8 +22,8 @@
 #include "socket.h"
 #include "game.h"
 
-int   server = 0;
-Robot robot;
+static int   server = 0;
+static Robot robot;
 
 #define ORDER(Name, CODE)                     \
 void Order_##Name(float param)                \
