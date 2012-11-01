@@ -1,6 +1,6 @@
 all: client server display
 
-client: socket.o main_client.o
+client: socket.o main_client.o client.o
 	gcc $^ -o $@
 
 server: socket.o main_server.o server.o game.o
