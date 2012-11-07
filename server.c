@@ -32,9 +32,10 @@
 
 #define RADAR_SIGHT 1000
 
-static inline float min(float a, float b)
+// returns the absolute-max value allowed
+static inline float rule_max(float rule, float x)
 {
-	return a < b ? a : b;
+	return fabs(x) < rule ? x : (x < 0 ? (-rule) : rule);
 }
 
 static inline void decreaseEnergy(Server* s, u32 i, float amount)
@@ -93,8 +94,9 @@ void Server_Debug(Server* s)
 	printf("==================================\n");
 	printf("Robots:\n");
 	FOREACH(s->, robots, i)
-		Robot r = s->robots[i];
-		printf("#%lu: (%f, %f) %f° %f° %f\n", i, r.x, r.y, r.angle, r.gunAngle, r.energy);
+		Robot*      r = &s->robots[i];
+		RobotOrder* o = &s->robotOrders[i];
+		printf("#%lu: (%f, %f) %f° %f° %f > %f %f %f\n", i, r->x, r->y, r->angle, r->gunAngle, r->energy, o->advance, o->turn, o->turnGun);
 	DONE
 	printf("\n");
 
@@ -193,9 +195,9 @@ bool Server_HandleOrder(Server* s, u32 id)
 		break;
 
 	case O_GUNSPEED:
-		rule = s->game.max_turnGunSpeed;
+		rule = s->game.max_gunSpeed;
 		if (rule < 0 || (0 <= order.param && order.param <= rule))
-			r->turnGunSpeed = order.param;
+			r->gunSpeed = order.param;
 		break;
 
 	}
@@ -214,24 +216,22 @@ void Server_Tick(Server* s, float time)
 		Robot*      r = &s->robots[i];
 		RobotOrder* o = &s->robotOrders[i];
 
-		float gunAngle = min(time * r->turnGunSpeed, o->turnGun);
+		float gunAngle = rule_max(time * r->gunSpeed, o->turnGun);
 		r->gunAngle += deg2rad(gunAngle);
 		o->turnGun -= gunAngle;
 
 		// if no collision occurs, we confirm the move by copying back the new data
-		Robot      nr;
-		RobotOrder no;
+		Robot nr;
 		memcpy(&nr, r, sizeof(Robot));
-		memcpy(&no, o, sizeof(RobotOrder));
 
-		float angle = min(time * r->turnSpeed, o->turn);
+		float angle = rule_max(time * r->turnSpeed, o->turn);
 		nr.angle += deg2rad(angle);
-		no.turn -= angle;
+		o->turn -= angle;
 
-		float distance = min(time * r->velocity, o->advance);
+		float distance = rule_max(time * r->velocity, o->advance);
 		nr.x += distance * sin(r->angle);
 		nr.y -= distance * cos(r->angle);
-		no.advance -= distance;
+		o->advance -= distance;
 
 		bool collide = !GameContainsRobot(&s->game, &nr);
 		if (collide)
@@ -266,14 +266,18 @@ void Server_Tick(Server* s, float time)
 					write(s->display,    &j,         sizeof(u32));
 					write(s->clients[i], &eventCode, sizeof(EventCode));
 					write(s->clients[i], &j,         sizeof(u32));
-
-					r->velocity  = 0;
-					r->turnSpeed = 0;
 				}
 			}
 		DONE
-		if (!collide)
+		if (collide)
+		{
+			o->advance = 0;
+			o->turn    = 0;
+		}
+		else
+		{
 			memcpy(r, &nr, sizeof(Robot));
+		}
 	DONE
 
 	FOREACH(s->, bullets, i)
@@ -386,7 +390,10 @@ void Server_Loop(Server* s)
 			73,
 			116,
 			deg2rad(random() % 360),
-			0, 100.0, 0, 0, 0
+			0, 100.0,
+			s->game.max_velocity,
+			s->game.max_turnSpeed,
+			s->game.max_gunSpeed,
 		};
 		// don't merge the next lines: ENABLE may change s->robots pointer
 		u32 id;
