@@ -33,10 +33,13 @@ void Order_##Name(float param)                \
 	order.param = param;                  \
 	write(server, &order, sizeof(Order)); \
 }
-ORDER(Advance, O_ADVANCE)
-ORDER(Turn,    O_TURN)
-ORDER(TurnGun, O_TURNGUN)
-ORDER(Fire,    O_FIRE)
+ORDER(Advance,      O_ADVANCE)
+ORDER(Turn,         O_TURN)
+ORDER(TurnGun,      O_TURNGUN)
+ORDER(Fire,         O_FIRE)
+ORDER(SetVelocity,  O_VELOCITY)
+ORDER(SetTurnSpeed, O_TURNSPEED)
+ORDER(SetGunSpeed,  O_GUNSPEED)
 
 void (*cb_Start   )(Robot*              ) = NULL;
 void (*cb_Tick    )(Robot*              ) = NULL;

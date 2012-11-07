@@ -52,18 +52,37 @@ From now on, the servers only sends data for in-game events concerning the clien
 
 An order is a message which is sent by a robot to the server whenever he wants. Currently, every order takes exactly one 4-byte (float) parameter. Here is a list of order codes:
 
-ADVANCE 0x01
-TURN    0x02
-TURNGUN 0x03
-FIRE    0x04
+ADVANCE   0x01
+TURN      0x02
+TURNGUN   0x03
+FIRE      0x04
+VELOCITY  0x05
+TURNSPEED 0x06
+GUNSPEED  0x07
 
 
-== Moves ==
+== ADVANCE (0x01) ==
 
-The movement orders are ADVANCE (0x01), TURN (0x02) and TURNGUN (0x03). They actually sets the (may be negative) at which the robot moves forward, turn to the right, or turn its gun to the right. The parameter is the desired speed.
+This makes the robot to advance by the given distance. Any other ADVANCE order that the robot would be executing is canceled.
 
-Client> COMMAND
-Client> speed   (float)
+Client> 0x01
+Client> distance (float)
+
+
+== TURN (0x02) ==
+
+This makes the robot to turn his chassis by the given angle. Any other TURN order that the robot would be executing is canceled.
+
+Client> 0x02
+Client> angle (float)
+
+
+== TURNGUN (0x03) ==
+
+This makes the robot to turn its gun by the given angle. ANy other TURNGUN order that the robot would be executing is canceled.
+
+Client> 0x03
+Client> angle (float)
 
 
 == FIRE (0x04) ==
@@ -72,6 +91,30 @@ This makes the robot to fire a bullet of energy immediatly. The parameter is the
 
 Client> 0x04
 Client> energy (float)
+
+
+== VELOCITY (0x05) ==
+
+This sets the velocity at which the robot moves.
+
+Client> 0x05
+Client> velocity (float)
+
+
+== TURNSPEED (0x06) ==
+
+This sets the speed at which the robot turns.
+
+Client> 0x06
+Client> speed (float)
+
+
+== GUNSPEED (0x07) ==
+
+This sets the speed a which the robot's gun turns.
+
+Client> 0x07
+Client> speed (float)
 
 
 

@@ -21,9 +21,9 @@
 void cbStart(Robot* robot)
 {
 	(void) robot;
-	Order_Advance( 50);
-	Order_Turn   ( 30);
-	Order_TurnGun(-90);
+	Order_SetVelocity ( 50);
+	Order_SetTurnSpeed( 30);
+	Order_SetGunSpeed (-90);
 }
 
 void cbRobot(Robot* robot, Robot* r)
@@ -36,7 +36,7 @@ void cbRobot(Robot* robot, Robot* r)
 void cbBullet(Robot* robot, Bullet* b)
 {
 	if (b->from != robot->id)
-		Order_Advance(-100);
+		Order_SetVelocity(-100);
 }
 
 int main(int argc, char** argv)

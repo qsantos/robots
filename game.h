@@ -29,10 +29,13 @@ static const u8 START_MESSAGE  = 0x42;
 
 typedef enum
 {
-	O_ADVANCE  = 0x01,
-	O_TURN     = 0x02,
-	O_TURNGUN  = 0x03,
-	O_FIRE     = 0x04,
+	O_ADVANCE   = 0x01,
+	O_TURN      = 0x02,
+	O_TURNGUN   = 0x03,
+	O_FIRE      = 0x04,
+	O_VELOCITY  = 0x05,
+	O_TURNSPEED = 0x06,
+	O_GUNSPEED  = 0x07,
 } OrderCode;
 
 typedef enum

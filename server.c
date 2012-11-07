@@ -120,7 +120,8 @@ void Server_AcceptClients(Server* s)
 		s->game.n_clients++;
 
 		u8 hello[2];
-		read(s->clients[i],  hello,           sizeof(u8) * 2);
+		read(s->clients[i], hello, sizeof(u8) * 2);
+
 		write(s->clients[i], &MAGIC_WORD,     sizeof(u8));
 		write(s->clients[i], &VERSION_NUMBER, sizeof(u8));
 		write(s->clients[i], &s->game,        sizeof(Game));
@@ -141,27 +142,19 @@ bool Server_HandleOrder(Server* s, u32 id)
 	float max;
 	switch (order.code)
 	{
+// TODO
 	case O_ADVANCE:
-		max = s->game.max_velocity;
-		if (max < 0 || fabs(order.param) <= max)
-			r->velocity = order.param;
 		break;
 
 	case O_TURN:
-		max = s->game.max_turnSpeed;
-		if (max < 0 || fabs(order.param) <= max)
-			r->turnSpeed = order.param;
 		break;
 
 	case O_TURNGUN:
-		max = s->game.max_turnGunSpeed;
-		if (max < 0 || fabs(order.param) <= max)
-			r->turnGunSpeed = order.param;
 		break;
 
 	case O_FIRE:
 		max = s->game.max_fireEnergy;
-		if ((max < 0 || order.param <= max) && r->energy >= order.param)
+		if ((max < 0 || (0 <= order.param && order.param <= max)) && r->energy >= order.param)
 		{
 			r->energy -= order.param;
 			// don't merge the next lines: ENABLE may change s->bullets pointer
@@ -175,6 +168,25 @@ bool Server_HandleOrder(Server* s, u32 id)
 			b->energy  = order.param;
 		}
 		break;
+
+	case O_VELOCITY:
+		max = s->game.max_velocity;
+		if (max < 0 || (0 <= order.param && order.param <= max))
+			r->velocity = order.param;
+		break;
+
+	case O_TURNSPEED:
+		max = s->game.max_turnSpeed;
+		if (max < 0 || (0 <= order.param && order.param <= max))
+			r->turnSpeed = order.param;
+		break;
+
+	case O_GUNSPEED:
+		max = s->game.max_turnGunSpeed;
+		if (max < 0 || (0 <= order.param && order.param <= max))
+			r->turnGunSpeed = order.param;
+		break;
+
 	}
 
 	return true;

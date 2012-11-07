@@ -34,10 +34,13 @@
 extern Game game;
 
 // Use them to send orders to your robot
-void Order_Advance(float);
-void Order_Turn   (float);
-void Order_TurnGun(float);
-void Order_Fire   (float);
+void Order_Advance     (float);
+void Order_Turn        (float);
+void Order_TurnGun     (float);
+void Order_Fire        (float);
+void Order_SetVelocity (float);
+void Order_SetTurnSpeed(float);
+void Order_SetGunSpeed (float);
 
 // Set these to your callback functions
 //     return value

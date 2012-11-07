@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	Server_AcceptDisplay(server);
 	Server_AcceptClients(server);
 
-	printf("Starting simulation\n");
+	printf("Starting game\n");
 	Server_Loop(server);
 
 	Server_Delete(server);
