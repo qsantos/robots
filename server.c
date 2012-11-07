@@ -350,6 +350,9 @@ void Server_Dump(Server* s)
 	FOREACH(s->, robots, i)
 		write(s->display, &s->robots[i], sizeof(Robot));
 	DONE
+	FOREACH(s->, robotOrders, i);
+		write(s->display, &s->robotOrders[i], sizeof(RobotOrder));
+	DONE
 	write(s->display, &s->n_bullets, sizeof(u32));
 	FOREACH(s->, bullets, i)
 		write(s->display, &s->bullets[i], sizeof(Bullet));

@@ -58,9 +58,9 @@ static const char* tex_name  [TEX_NB] =
 	"img/gun.png",
 	"img/explosion.png",
 };
-static int         texture   [TEX_NB];
-static int         tex_width [TEX_NB];
-static int         tex_height[TEX_NB];
+static int texture   [TEX_NB];
+static int tex_width [TEX_NB];
+static int tex_height[TEX_NB];
 
 static int   winId;
 static int   winWidth  = 1024;
@@ -70,14 +70,15 @@ static int   mouseY    = 0;
 static float zoom      = 1;
 
 static struct timeb lastDraw;
-static int     server;
-static Game    game;
-static u32     n_robots     = 0;
-static u32     a_robots     = 0;
-static Robot*  robots       = NULL;
-static u32     n_bullets    = 0;
-static u32     a_bullets    = 0;
-static Bullet* bullet       = NULL;
+static int          server;
+static Game         game;
+static u32          n_robots     = 0;
+static u32          a_robots     = 0;
+static Robot*       robots       = NULL;
+static RobotOrder*  robotOrders = NULL;
+static u32          n_bullets    = 0;
+static u32          a_bullets    = 0;
+static Bullet*      bullet       = NULL;
 
 #define EXPLOSION_DURATION (2.0f)
 typedef struct
@@ -110,10 +111,12 @@ void handleEvent()
 		if (nn_robots > a_robots)
 		{
 			a_robots = nn_robots;
-			robots = REALLOC(robots, Robot, a_robots);
+			robots      = REALLOC(robots,      Robot, a_robots);
+			robotOrders = REALLOC(robotOrders, RobotOrder, a_robots);
 		}
 		n_robots = nn_robots;
-		read(server, robots, sizeof(Robot) * n_robots);
+		read(server, robots,      sizeof(Robot)      * n_robots);
+		read(server, robotOrders, sizeof(RobotOrder) * n_robots);
 
 		u32 nn_bullets;
 		read(server, &nn_bullets, sizeof(u32));
@@ -410,6 +413,7 @@ int main(int argc, char** argv)
 
 	FREE(, explosions);
 	free(bullet);
+	free(robotOrders);
 	free(robots);
 	close(server);
 	return 0;

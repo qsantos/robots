@@ -162,7 +162,7 @@ Server> RobotOrder (n_robots items) (see RobotOrder information)
 Server> n_bullets  (uint32)
 Server> Bullet     (n_bullet items) (see Bullet information)
 
-where 'n_robots' (respectively 'n_bullets') is the total number of active robots (bullets) still in the game.
+where 'n_robots' (respectively 'n_bullets') is the total number of active robots (bullets) still in the game and the items of the arrays of 'Robot' and of 'RobotOrder' should be sorted the same way.
 
 And its own information to every robot:
 
