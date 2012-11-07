@@ -200,10 +200,14 @@ Server> Robot (see Robot information)
 
 General information about the game are sent following the scheme:
 
-> width     (float)
-> height    (float)
-> n_slots   (uint32)
-> n_clients (uint32)
+> width            (float)
+> height           (float)
+> max_velocity     (float)
+> max_turnSpeed    (float)
+> max_turnGunSpeed (float)
+> max_fireEnergy   (float)
+> n_slots          (uint32)
+> n_clients        (uint32)
 
 
 == Robot information ==
