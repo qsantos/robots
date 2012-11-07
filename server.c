@@ -32,6 +32,11 @@
 
 #define RADAR_SIGHT 1000
 
+static inline float min(float a, float b)
+{
+	return a < b ? a : b;
+}
+
 static inline void decreaseEnergy(Server* s, u32 i, float amount)
 {
 	s->robots[i].energy -= amount;
@@ -45,6 +50,7 @@ static inline void decreaseEnergy(Server* s, u32 i, float amount)
 			write(s->clients[j], &s->robots[i], sizeof(Robot));
 		DONE
 
+		DISABLE(s->, robotOrders, i);
 		DISABLE(s->, robots, i);
 	}
 }
@@ -59,6 +65,7 @@ Server* Server_New(int socket, u32 n_clients)
 	ret->game = g;
 
 	INIT(ret->, robots);
+	INIT(ret->, robotOrders);
 	INIT(ret->, bullets);
 
 	return ret;
@@ -69,6 +76,7 @@ void Server_Delete(Server* s)
 	assert(s);
 
 	FREE(s->, bullets);
+	FREE(s->, robotOrders);
 	FREE(s->, robots);
 	for (u32 i = 0; i < s->game.n_clients; i++)
 		close(s->clients[i]);
@@ -138,23 +146,26 @@ bool Server_HandleOrder(Server* s, u32 id)
 	if (read(s->clients[id], &order,  sizeof(Order)) <= 0)
 		return false;
 
-	Robot* r = &s->robots[id];
-	float max;
+	Robot*      r = &s->robots[id];
+	RobotOrder* o = &s->robotOrders[id];
+	float rule;
 	switch (order.code)
 	{
-// TODO
 	case O_ADVANCE:
+		o->advance = order.param;
 		break;
 
 	case O_TURN:
+		o->turn = order.param;
 		break;
 
 	case O_TURNGUN:
+		o->turnGun = order.param;
 		break;
 
 	case O_FIRE:
-		max = s->game.max_fireEnergy;
-		if ((max < 0 || (0 <= order.param && order.param <= max)) && r->energy >= order.param)
+		rule = s->game.max_fireEnergy;
+		if ((rule < 0 || (0 <= order.param && order.param <= rule)) && r->energy >= order.param)
 		{
 			r->energy -= order.param;
 			// don't merge the next lines: ENABLE may change s->bullets pointer
@@ -170,20 +181,20 @@ bool Server_HandleOrder(Server* s, u32 id)
 		break;
 
 	case O_VELOCITY:
-		max = s->game.max_velocity;
-		if (max < 0 || (0 <= order.param && order.param <= max))
+		rule = s->game.max_velocity;
+		if (rule < 0 || (0 <= order.param && order.param <= rule))
 			r->velocity = order.param;
 		break;
 
 	case O_TURNSPEED:
-		max = s->game.max_turnSpeed;
-		if (max < 0 || (0 <= order.param && order.param <= max))
+		rule = s->game.max_turnSpeed;
+		if (rule < 0 || (0 <= order.param && order.param <= rule))
 			r->turnSpeed = order.param;
 		break;
 
 	case O_GUNSPEED:
-		max = s->game.max_turnGunSpeed;
-		if (max < 0 || (0 <= order.param && order.param <= max))
+		rule = s->game.max_turnGunSpeed;
+		if (rule < 0 || (0 <= order.param && order.param <= rule))
 			r->turnGunSpeed = order.param;
 		break;
 
@@ -200,13 +211,27 @@ void Server_Tick(Server* s, float time)
 		decreaseEnergy(s, 0, time*10);
 
 	FOREACH(s->, robots, i)
-		Robot* r = &s->robots[i];
-		r->gunAngle += deg2rad(time * r->turnGunSpeed);
-		Robot nr;
+		Robot*      r = &s->robots[i];
+		RobotOrder* o = &s->robotOrders[i];
+
+		float gunAngle = min(time * r->turnGunSpeed, o->turnGun);
+		r->gunAngle += deg2rad(gunAngle);
+		o->turnGun -= gunAngle;
+
+		// if no collision occurs, we confirm the move by copying back the new data
+		Robot      nr;
+		RobotOrder no;
 		memcpy(&nr, r, sizeof(Robot));
-		nr.angle += deg2rad(time * r->turnSpeed);
-		nr.x += time * r->velocity * sin(r->angle);
-		nr.y -= time * r->velocity * cos(r->angle);
+		memcpy(&no, o, sizeof(RobotOrder));
+
+		float angle = min(time * r->turnSpeed, o->turn);
+		nr.angle += deg2rad(angle);
+		no.turn -= angle;
+
+		float distance = min(time * r->velocity, o->advance);
+		nr.x += distance * sin(r->angle);
+		nr.y -= distance * cos(r->angle);
+		no.advance -= distance;
 
 		bool collide = !GameContainsRobot(&s->game, &nr);
 		if (collide)
@@ -362,9 +387,15 @@ void Server_Loop(Server* s)
 		};
 		// don't merge the next lines: ENABLE may change s->robots pointer
 		u32 id;
-		ENABLE(s->, Robot, robots, id);    assert(i == id); // TODO
+		u32 id2;
+		ENABLE(s->, Robot,      robots, id);
+		ENABLE(s->, RobotOrder, robotOrders, id2);
+		assert(i == id);   // TODO
+		assert(id == id2); // TODO
+
 		Robot* r = &s->robots[id];
 		memcpy(r, &nr, sizeof(Robot));
+		memset(&s->robotOrders[id], 0, sizeof(RobotOrder));
 		write(s->clients[i], r, sizeof(Robot));
 	}
 	for (u32 i = 0; i < s->game.n_clients; i++)

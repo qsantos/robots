@@ -30,8 +30,10 @@ typedef struct
 
 	Game    game;
 
-	DEF(Robot,  robots)
-	DEF(Bullet, bullets)
+	// because items are added or removed simultaneously on 'robots' and 'robotOrders', they should use the same array cells
+	DEF(Robot,      robots)
+	DEF(RobotOrder, robotOrders)
+	DEF(Bullet,     bullets)
 } Server;
 
 Server* Server_New          (int, u32);

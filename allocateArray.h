@@ -86,18 +86,20 @@
 		}                                                                                  \
 		P NAME = REALLOC(P NAME, TYPE, P a_##NAME);                                        \
 	}                                                                                          \
-	u32 I##32 = 0;                                                                             \
-	while (P active_##NAME[I##32] == (u32)-1)                                                  \
-		I##32++;                                                                           \
-	u32 bitfield = P active_##NAME[I##32];                                                     \
-	I = I##32 * 32;                                                                            \
-	while (bitfield % 2)                                                                       \
 	{                                                                                          \
-		I++;                                                                               \
-		bitfield >>= 1;                                                                    \
+		u32 I##32 = 0;                                                                     \
+		while (P active_##NAME[I##32] == (u32)-1)                                          \
+			I##32++;                                                                   \
+		u32 bitfield = P active_##NAME[I##32];                                             \
+		I = I##32 * 32;                                                                    \
+		while (bitfield % 2)                                                               \
+		{                                                                                  \
+			I++;                                                                       \
+			bitfield >>= 1;                                                            \
+		}                                                                                  \
+		P active_##NAME[I/32] |= (1 << (I%32));                                            \
+		P n_##NAME++;                                                                      \
 	}                                                                                          \
-	P active_##NAME[I/32] |= (1 << (I%32));                                                    \
-	P n_##NAME++;                                                                              \
 }
 
 // free a cell in the array
