@@ -156,10 +156,11 @@ When the server thinks a little reminder would be helpful, it sends game informa
 
 Server> 0x02
 Server> Game
-Server> n_robots  (uint32)
-Server> Robot     (n_robots items) (see Robot information)
-Server> n_bullets (uint32)
-Server> Bullet    (n_bullet items) (see Bullet information)
+Server> n_robots   (uint32)
+Server> Robot      (n_robots items) (see Robot information)
+Server> RobotOrder (n_robots items) (see RobotOrder information)
+Server> n_bullets  (uint32)
+Server> Bullet     (n_bullet items) (see Bullet information)
 
 where 'n_robots' (respectively 'n_bullets') is the total number of active robots (bullets) still in the game.
 
@@ -270,6 +271,17 @@ When a robot's data need to be sent, the following scheme is used:
 > turnGunSpeed (float)
 
 where 'id' MUST be an uniq identifier for the robot on the server's instance.
+
+
+== RobotOrder information ==
+
+RobotOrder fields are private information. They should only be sent to the display. They are use to track the orders the robots are executing.
+
+> advance (float)
+> turn    (float)
+> turnGun (float)
+
+Where each value is the amount of the action that remains to be executed.
 
 
 == Bullet information ==

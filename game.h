@@ -86,6 +86,13 @@ typedef struct __attribute__((packed))
 
 typedef struct __attribute__((packed))
 {
+	float advance;
+	float turn;
+	float turnGun;
+} RobotOrder;
+
+typedef struct __attribute__((packed))
+{
 	u32   from;
 	float x;
 	float y;
