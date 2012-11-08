@@ -22,28 +22,19 @@ void cbStart(Robot* robot)
 {
 	(void) robot;
 	Order_Turn(-robot->angle);
-	Order_TurnGun(360);
-	Order_Advance(100000);
 }
 
 void cbRobot(Robot* robot, Robot* r)
 {
 	(void) robot;
 	(void) r;
-	Order_Fire(1);
-}
-
-void cbBullet(Robot* robot, Bullet* b)
-{
-	if (b->from != robot->id)
-		Order_Advance(-100);
+//	Order_Fire(1);
 }
 
 int main(int argc, char** argv)
 {
 	cb_Start  = cbStart;
 	cb_Robot  = cbRobot;
-	cb_Bullet = cbBullet;
 
 	autoClient(argc, argv);
 	return 0;

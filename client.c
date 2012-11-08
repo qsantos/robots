@@ -139,8 +139,7 @@ int autoClient(int argc, char** argv)
 	while (game.n_clients < game.n_slots)
 		read(server, &game.n_clients, sizeof(u32));
 
-	Robot r;
-	read(server, &r, sizeof(Robot));
+	read(server, &robot, sizeof(Robot));
 
 	u8 start;
 	read(server, &start, sizeof(u8));

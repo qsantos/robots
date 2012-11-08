@@ -62,7 +62,7 @@ Server* Server_New(int socket, u32 n_clients)
 
 	ret->listener = socket;
 	ret->clients  = MALLOC(int, n_clients);
-	Game g = {1000, 1000, 100, 30, 90, -1, n_clients, 0};
+	Game g = {1000, 1000, 100, PI/2, PI, -1, n_clients, 0};
 	ret->game = g;
 
 	INIT(ret->, robots);
@@ -96,7 +96,7 @@ void Server_Debug(Server* s)
 	FOREACH(s->, robots, i)
 		Robot*      r = &s->robots[i];
 		RobotOrder* o = &s->robotOrders[i];
-		printf("#%lu: (%f, %f) %f° %f° %f > %f %f %f\n", i, r->x, r->y, r->angle, r->gunAngle, r->energy, o->advance, o->turn, o->turnGun);
+		printf("#%lu: (%f, %f) %f° %f° %f > %f %f° %f°\n", i, r->x, r->y, rad2deg(r->angle), rad2deg(r->gunAngle), r->energy, o->advance, rad2deg(o->turn), rad2deg(o->turnGun));
 	DONE
 	printf("\n");
 
@@ -159,6 +159,7 @@ bool Server_HandleOrder(Server* s, u32 id)
 
 	case O_TURN:
 		o->turn = order.param;
+printf("#%lu: turning of %f\n", id, o->turn);
 		break;
 
 	case O_TURNGUN:
@@ -217,7 +218,7 @@ void Server_Tick(Server* s, float time)
 		RobotOrder* o = &s->robotOrders[i];
 
 		float gunAngle = rule_max(time * r->gunSpeed, o->turnGun);
-		r->gunAngle += deg2rad(gunAngle);
+		r->gunAngle += gunAngle;
 		o->turnGun -= gunAngle;
 
 		// if no collision occurs, we confirm the move by copying back the new data
@@ -225,7 +226,7 @@ void Server_Tick(Server* s, float time)
 		memcpy(&nr, r, sizeof(Robot));
 
 		float angle = rule_max(time * r->turnSpeed, o->turn);
-		nr.angle += deg2rad(angle);
+		nr.angle += angle;
 		o->turn -= angle;
 
 		float distance = rule_max(time * r->velocity, o->advance);
