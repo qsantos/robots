@@ -34,8 +34,6 @@
 #define GLUT_WHEEL_UP   (3)
 #define GLUT_WHEEL_DOWN (4)
 
-#include <errno.h> // TODO
-
 static inline float max(float a, float b)
 {
 	return a > b ? a : b;
@@ -92,15 +90,11 @@ typedef struct
 } Explosion;
 DEF(Explosion, explosions)
 
-static inline void totalRead(int socket, void* buffer, int size)
-{
-	int c = 0;
-	while ((c += read(socket, buffer, size - c)) < size);
-}
+// TODO: read all robots, orderRobots or bullets in one time
 void handleEvent()
 {
 	EventCode eventCode;
-	if (read(server, &eventCode, sizeof(EventCode)) <= 0) {assert(false);return;}
+	read(server, &eventCode, sizeof(EventCode));
 
 	Robot  r;
 	Bullet b;
@@ -122,8 +116,10 @@ void handleEvent()
 			robotOrders = REALLOC(robotOrders, RobotOrder, a_robots);
 		}
 		n_robots = nn_robots;
-		totalRead(server, robots,      sizeof(Robot)      * n_robots);
-		totalRead(server, robotOrders, sizeof(RobotOrder) * n_robots);
+		for (u32 i = 0; i < n_robots; i++)
+			read(server, &robots[i], sizeof(Robot));
+		for (u32 i = 0; i < n_robots; i++)
+			read(server, &robotOrders[i], sizeof(RobotOrder));
 
 		u32 nn_bullets;
 		read(server, &nn_bullets, sizeof(u32));
@@ -133,7 +129,9 @@ void handleEvent()
 			bullets = REALLOC(bullets, Bullet, a_bullets);
 		}
 		n_bullets = nn_bullets;
-		read(server, bullets, sizeof(Bullet) * n_bullets);
+		for (u32 i = 0; i < n_bullets; i++)
+			read(server, &bullets[i], sizeof(Bullet));
+
 		break;
 	case E_ROBOT:
 		read(server, &u1, sizeof(u32));

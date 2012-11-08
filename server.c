@@ -106,7 +106,6 @@ void Server_Debug(Server* s)
 		printf("#%lu: (%f, %f), %f°, %f\n", i, b->x, b->y, rad2deg(b->angle), b->energy);
 	DONE
 	printf("\n");
-
 }
 
 void Server_AcceptDisplay(Server* s)
