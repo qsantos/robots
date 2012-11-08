@@ -159,7 +159,6 @@ bool Server_HandleOrder(Server* s, u32 id)
 
 	case O_TURN:
 		o->turn = order.param;
-printf("#%lu: turning of %f\n", id, o->turn);
 		break;
 
 	case O_TURNGUN:
