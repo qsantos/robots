@@ -59,6 +59,7 @@ static const char* tex_name  [TEX_NB] =
 	"img/explosion.png",
 };
 static int texture   [TEX_NB];
+// TODO: should not be used (currently for gun positionning)
 static int tex_width [TEX_NB];
 static int tex_height[TEX_NB];
 
@@ -359,6 +360,19 @@ void glInit()
 	}
 }
 
+// threaded sound start
+int*   g_argc;
+char** g_argv;
+void* soundStart(void* param)
+{
+	(void) param;
+
+	AL_Init(g_argc, g_argv);
+	AL_Play("music/waiting.ogg", 1);
+
+	return NULL;
+}
+
 void usage(int argc, char** argv)
 {
 	(void) argc;
@@ -375,6 +389,9 @@ void usage(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+	g_argc = &argc;
+	g_argv = argv;
+
 	const char* node    = argc > 1 ? argv[1] : "::1";
 	const char* service = argc > 2 ? argv[2] : "4242";
 
@@ -388,9 +405,6 @@ int main(int argc, char** argv)
 	}
 	printf("Connected\n");
 
-	AL_Init(&argc, argv);
-	AL_Play("music/waiting.ogg", 1);
-
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);
 	winId = glutCreateWindow("Robot battle");
@@ -403,17 +417,27 @@ int main(int argc, char** argv)
 	INIT(, explosions);
 	ftime(&lastDraw);
 
+	// server socket listening
 	pthread_t listenerThread;
 	pthread_create(&listenerThread, NULL, listener, NULL);
+
+	// sound playing
+	pthread_t soundThread;
+	pthread_create(&soundThread, NULL, soundStart, NULL);
 
 	glInit();
 	glutMainLoop();
 
 	printf("Terminating\n");
+
+	// stop sound
+	pthread_cancel(soundThread);
+	pthread_join(soundThread, NULL);
+	AL_Exit();
+
+	// stop listening
 	pthread_cancel(listenerThread);
 	pthread_join(listenerThread, NULL);
-
-	AL_Exit();
 
 	FREE(, explosions);
 	free(bullets);
