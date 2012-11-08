@@ -140,6 +140,7 @@ void Server_AcceptClients(Server* s)
 	}
 }
 
+// TODO: id is not cell num
 bool Server_HandleOrder(Server* s, u32 id)
 {
 	assert(s);

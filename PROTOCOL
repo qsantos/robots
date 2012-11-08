@@ -125,7 +125,7 @@ An events is a message which is sent by the server to both the display and the c
 
 TICK     0x01
 DUMP     0x02
-SPOTTED  0x03
+ROBOT    0x03
 BULLET   0x04
 HIT      0x05
 HITBY    0x06
@@ -170,7 +170,7 @@ Server> 0x02
 Server> Robot (see Robot information)
 
 
-== SPOTTED (0x03) ==
+== ROBOT (0x03) ==
 Robots: the robot which spotted his foe
 
 Whenever another robot is in sight, the client gets the event:

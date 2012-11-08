@@ -34,6 +34,8 @@
 #define GLUT_WHEEL_UP   (3)
 #define GLUT_WHEEL_DOWN (4)
 
+#include <errno.h> // TODO
+
 static inline float max(float a, float b)
 {
 	return a > b ? a : b;
@@ -72,13 +74,13 @@ static float zoom      = 1;
 static struct timeb lastDraw;
 static int          server;
 static Game         game;
-static u32          n_robots     = 0;
-static u32          a_robots     = 0;
-static Robot*       robots       = NULL;
+static u32          n_robots    = 0;
+static u32          a_robots    = 0;
+static Robot*       robots      = NULL;
 static RobotOrder*  robotOrders = NULL;
-static u32          n_bullets    = 0;
-static u32          a_bullets    = 0;
-static Bullet*      bullet       = NULL;
+static u32          n_bullets   = 0;
+static u32          a_bullets   = 0;
+static Bullet*      bullets     = NULL;
 
 #define EXPLOSION_DURATION (2.0f)
 typedef struct
@@ -90,10 +92,15 @@ typedef struct
 } Explosion;
 DEF(Explosion, explosions)
 
+static inline void totalRead(int socket, void* buffer, int size)
+{
+	int c = 0;
+	while ((c += read(socket, buffer, size - c)) < size);
+}
 void handleEvent()
 {
 	EventCode eventCode;
-	if (read(server, &eventCode, sizeof(EventCode)) <= 0) return;
+	if (read(server, &eventCode, sizeof(EventCode)) <= 0) {assert(false);return;}
 
 	Robot  r;
 	Bullet b;
@@ -111,26 +118,25 @@ void handleEvent()
 		if (nn_robots > a_robots)
 		{
 			a_robots = nn_robots;
-			robots      = REALLOC(robots,      Robot, a_robots);
+			robots      = REALLOC(robots,      Robot,      a_robots);
 			robotOrders = REALLOC(robotOrders, RobotOrder, a_robots);
 		}
 		n_robots = nn_robots;
-		read(server, robots,      sizeof(Robot)      * n_robots);
-		read(server, robotOrders, sizeof(RobotOrder) * n_robots);
+		totalRead(server, robots,      sizeof(Robot)      * n_robots);
+		totalRead(server, robotOrders, sizeof(RobotOrder) * n_robots);
 
 		u32 nn_bullets;
 		read(server, &nn_bullets, sizeof(u32));
 		if (nn_bullets > a_bullets)
 		{
 			a_bullets = nn_bullets;
-			bullet = REALLOC(bullet, Bullet, a_bullets);
+			bullets = REALLOC(bullets, Bullet, a_bullets);
 		}
 		n_bullets = nn_bullets;
-		read(server, bullet, sizeof(Bullet) * n_bullets);
+		read(server, bullets, sizeof(Bullet) * n_bullets);
 		break;
 	case E_ROBOT:
 		read(server, &u1, sizeof(u32));
-		read(server, &u2, sizeof(u32));
 		read(server, &r,  sizeof(Robot));
 		break;
 	case E_BULLET:
@@ -287,7 +293,7 @@ void cb_displayFunc()
 		drawRobot(&robots[i]);
 
 	for (u32 i = 0; i < n_bullets; i++)
-		drawBullet(&bullet[i]);
+		drawBullet(&bullets[i]);
 	
 	glPopMatrix();
 	glutSwapBuffers();
@@ -412,7 +418,7 @@ int main(int argc, char** argv)
 	AL_Exit();
 
 	FREE(, explosions);
-	free(bullet);
+	free(bullets);
 	free(robotOrders);
 	free(robots);
 	close(server);

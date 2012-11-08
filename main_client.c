@@ -21,7 +21,9 @@
 void cbStart(Robot* robot)
 {
 	(void) robot;
-	Order_Advance(100);
+	Order_Turn(-robot->angle);
+	Order_TurnGun(360);
+	Order_Advance(100000);
 }
 
 void cbRobot(Robot* robot, Robot* r)
