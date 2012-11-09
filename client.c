@@ -47,6 +47,7 @@ ORDER(SetGunSpeed,  O_GUNSPEED)
 void Order_Block##NAME(float param) \
 {                                   \
 	Order_##NAME(param);        \
+	robotOrder.PARAM = param;   \
 	while (robotOrder.PARAM)    \
 		usleep(100000);     \
 }
