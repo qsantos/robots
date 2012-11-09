@@ -30,8 +30,10 @@
 // Note: prefer putting starting code in the 'cb_Start' callback rather than in
 // 'main'
 
-// information about the game
-extern Game game;
+// information about the game and the AI's robot
+extern Game       game;
+extern Robot      robot;
+extern RobotOrder robotOrder;
 
 // Use them to send orders to your robot
 void Order_Advance     (float);
@@ -42,21 +44,26 @@ void Order_SetVelocity (float);
 void Order_SetTurnSpeed(float);
 void Order_SetGunSpeed (float);
 
+// these waits for the order to be fully executed before returning
+void Order_BlockAdvance(float);
+void Order_BlockTurn   (float);
+void Order_BlockTurnGun(float);
+
 // Set these to your callback functions
 //     return value
 //     |      callback name
 //     |      |            parameters
 //     |      |            |
-extern void (*cb_Start   )(Robot*              );
-extern void (*cb_Tick    )(Robot*              );
-extern void (*cb_Dump    )(Robot*              );
-extern void (*cb_Robot   )(Robot*, Robot*      );
-extern void (*cb_Bullet  )(Robot*, Bullet*     );
-extern void (*cb_Hit     )(Robot*, Bullet*, u32);
-extern void (*cb_HitBy   )(Robot*, Bullet*     );
-extern void (*cb_HitRobot)(Robot*, u32         );
-extern void (*cb_HitWall )(Robot*              );
-extern void (*cb_Kaboum  )(Robot*, Robot*      );
+extern void (*cb_Start   )(            );
+extern void (*cb_Tick    )(            );
+extern void (*cb_Dump    )(            );
+extern void (*cb_Robot   )(Robot*      );
+extern void (*cb_Bullet  )(Bullet*     );
+extern void (*cb_Hit     )(Bullet*, u32);
+extern void (*cb_HitBy   )(Bullet*     );
+extern void (*cb_HitRobot)(u32         );
+extern void (*cb_HitWall )(            );
+extern void (*cb_Kaboum  )(Robot*      );
 
 // Call this when you have set your callbacks
 int autoClient(int argc, char** argv);

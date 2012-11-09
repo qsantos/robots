@@ -22,12 +22,14 @@
 
 #include "socket.h"
 
-Game  game;
-int   server = 0;
-Robot robot;
+Game       game;
+Robot      robot;
+RobotOrder robotOrder;
 
-#define ORDER(Name, CODE)                     \
-void Order_##Name(float param)                \
+int server = 0;
+
+#define ORDER(NAME, CODE)                     \
+void Order_##NAME(float param)                \
 {                                             \
 	static Order order = { CODE, 0 };     \
 	order.param = param;                  \
@@ -41,16 +43,29 @@ ORDER(SetVelocity,  O_VELOCITY)
 ORDER(SetTurnSpeed, O_TURNSPEED)
 ORDER(SetGunSpeed,  O_GUNSPEED)
 
-void (*cb_Start   )(Robot*              ) = NULL;
-void (*cb_Tick    )(Robot*              ) = NULL;
-void (*cb_Dump    )(Robot*              ) = NULL;
-void (*cb_Robot   )(Robot*, Robot*      ) = NULL;
-void (*cb_Bullet  )(Robot*, Bullet*     ) = NULL;
-void (*cb_Hit     )(Robot*, Bullet*, u32) = NULL;
-void (*cb_HitBy   )(Robot*, Bullet*     ) = NULL;
-void (*cb_HitRobot)(Robot*, u32         ) = NULL;
-void (*cb_HitWall )(Robot*              ) = NULL;
-void (*cb_Kaboum  )(Robot*, Robot*      ) = NULL;
+/*
+#define ORDER_BLOCK(NAME, PARAM)    \
+void Order_Block##NAME(float param) \
+{                                   \
+	Order_##NAME(param);        \
+	while (robot.PARAM)         \
+		usleep();           \
+}
+ORDER_BLOCK(Advance, advance)
+ORDER_BLOCK(Turn,    turn)
+ORDER_BLOCK(TurnGu,  turnGun)
+*/
+
+void (*cb_Start   )(            ) = NULL;
+void (*cb_Tick    )(            ) = NULL;
+void (*cb_Dump    )(            ) = NULL;
+void (*cb_Robot   )(Robot*      ) = NULL;
+void (*cb_Bullet  )(Bullet*     ) = NULL;
+void (*cb_Hit     )(Bullet*, u32) = NULL;
+void (*cb_HitBy   )(Bullet*     ) = NULL;
+void (*cb_HitRobot)(u32         ) = NULL;
+void (*cb_HitWall )(            ) = NULL;
+void (*cb_Kaboum  )(Robot*      ) = NULL;
 
 void handleEvents()
 {
@@ -62,39 +77,40 @@ void handleEvents()
 	switch (eventCode)
 	{
 		case E_TICK:
-			if (cb_Tick) cb_Tick(&robot);
+			if (cb_Tick) cb_Tick();
 			break;
 		case E_DUMP:
-			read(server, &robot, sizeof(Robot));
-			if (cb_Dump) cb_Dump(&robot);
+			read(server, &robot,      sizeof(Robot));
+			read(server, &robotOrder, sizeof(RobotOrder));
+			if (cb_Dump) cb_Dump();
 			break;
 		case E_ROBOT:
 			read(server, &r, sizeof(Robot));
-			if (cb_Robot) cb_Robot(&robot, &r);
+			if (cb_Robot) cb_Robot(&r);
 			break;
 		case E_BULLET:
 			read(server, &b, sizeof(Bullet));
-			if (cb_Bullet) cb_Bullet(&robot, &b);
+			if (cb_Bullet) cb_Bullet(&b);
 			break;
 		case E_HIT:
 			read(server, &b, sizeof(Bullet));
 			read(server, &u, sizeof(u32));
-			if (cb_Hit) cb_Hit(&robot, &b, u);
+			if (cb_Hit) cb_Hit(&b, u);
 			break;
 		case E_HITBY:
 			read(server, &b, sizeof(Bullet));
-			if (cb_HitBy) cb_HitBy(&robot, &b);
+			if (cb_HitBy) cb_HitBy(&b);
 			break;
 		case E_HITROBOT:
 			read(server, &u, sizeof(u32));
-			if (cb_HitRobot) cb_HitRobot(&robot, u);
+			if (cb_HitRobot) cb_HitRobot(u);
 			break;
 		case E_HITWALL:
-			if (cb_HitWall) cb_HitWall(&robot);
+			if (cb_HitWall) cb_HitWall();
 			break;
 		case E_KABOUM:
 			read(server, &r, sizeof(Robot));
-			if (cb_Kaboum) cb_Kaboum(&robot, &r);
+			if (cb_Kaboum) cb_Kaboum(&r);
 			break;
 	}
 }
@@ -144,7 +160,7 @@ int autoClient(int argc, char** argv)
 	u8 start;
 	read(server, &start, sizeof(u8));
 
-	if (cb_Start) cb_Start(&robot);
+	if (cb_Start) cb_Start();
 
 	while (42)
 		handleEvents();

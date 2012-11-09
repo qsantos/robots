@@ -363,8 +363,9 @@ void Server_Dump(Server* s)
 	DONE
 
 	FOREACH(s->, robots, i)
-		write(s->clients[i], &eventCode,    sizeof(EventCode));
-		write(s->clients[i], &s->robots[i], sizeof(Robot));
+		write(s->clients[i], &eventCode,         sizeof(EventCode));
+		write(s->clients[i], &s->robots[i],      sizeof(Robot));
+		write(s->clients[i], &s->robotOrders[i], sizeof(RobotOrder));
 	DONE
 }
 

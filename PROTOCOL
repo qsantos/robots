@@ -167,7 +167,8 @@ where 'n_robots' (respectively 'n_bullets') is the total number of active robots
 And its own information to every robot:
 
 Server> 0x02
-Server> Robot (see Robot information)
+Server> Robot      (see Robot information)
+Server> RobotOrder (see RobotOrder information)
 
 
 == ROBOT (0x03) ==

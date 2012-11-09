@@ -18,15 +18,13 @@
 
 #include "client.h"
 
-void cbStart(Robot* robot)
+void cbStart()
 {
-	(void) robot;
-	Order_Turn(-robot->angle);
+	Order_Turn(-robot.angle);
 }
 
-void cbRobot(Robot* robot, Robot* r)
+void cbRobot(Robot* r)
 {
-	(void) robot;
 	(void) r;
 //	Order_Fire(1);
 }
