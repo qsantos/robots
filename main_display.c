@@ -392,7 +392,7 @@ int main(int argc, char** argv)
 	g_argc = &argc;
 	g_argv = argv;
 
-	const char* node    = argc > 1 ? argv[1] : "127.0.0.1";
+	const char* node    = argc > 1 ? argv[1] : "::1";
 	const char* service = argc > 2 ? argv[2] : "4242";
 
 	printf("Connecting to %s port %s\n", node, service);

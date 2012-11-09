@@ -19,7 +19,17 @@
 #ifndef MATH_H
 #define MATH_H
 
+#include <stdlib.h>
+
 #include "game.h"
+
+/* RANDOM */
+
+// return a float between a and b
+inline float randf(float a, float b)
+{
+	return a + ((float) random()) * (b-a) / RAND_MAX;
+}
 
 /* TRIGONOMETRY */
 
