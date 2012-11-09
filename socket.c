@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <netdb.h>
 
+#include <stdio.h> // TODO
 int TCP_Connect(const char* node, const char* service)
 {
 // see getaddrinfo(2)
@@ -39,16 +40,16 @@ int TCP_Connect(const char* node, const char* service)
 	{
 		sock = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol);
 		if (sock == -1)
-			continue;
+			continue; // try next addrinfo
 
-		if (connect(sock, cur->ai_addr, cur->ai_addrlen) != -1)
-			break;
+		if (connect(sock, cur->ai_addr, cur->ai_addrlen) == 0)
+			break; // keep this one
 
 		close(sock);
 		cur = cur->ai_next;
 	}
 
-	if (!result)
+	if (!cur)
 		sock = -1;
 	freeaddrinfo(result);
 	return sock;
@@ -85,7 +86,7 @@ int TCP_ListenTo(const char* node, const char* service)
 		cur = cur->ai_next;
 	}
 
-	if (!result)
+	if (!cur)
 		sock = -1;
 	freeaddrinfo(result);
 	return sock;
