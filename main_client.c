@@ -16,10 +16,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 \*/
 
+#include <pthread.h>
+
 #include "client.h"
 
+void* mainMove(void* param)
+{
+	(void) param;
+
+	Order_BlockTurn(-robot.angle);
+	while (1)
+	{
+		Order_BlockAdvance(100);
+		Order_BlockAdvance(-100);
+	}
+
+	return NULL;
+}
+
+pthread_t mainThread = 0;
 void cbStart()
 {
+	pthread_create(&mainThread, NULL, mainMove, NULL);
 	Order_Turn(-robot.angle);
 }
 
@@ -35,5 +53,8 @@ int main(int argc, char** argv)
 	cb_Robot  = cbRobot;
 
 	autoClient(argc, argv);
+
+	pthread_cancel(mainThread);
+	pthread_join(mainThread, NULL);
 	return 0;
 }

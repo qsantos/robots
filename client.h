@@ -45,6 +45,7 @@ void Order_SetTurnSpeed(float);
 void Order_SetGunSpeed (float);
 
 // these waits for the order to be fully executed before returning
+// NOTE: they should be used in threaded functions
 void Order_BlockAdvance(float);
 void Order_BlockTurn   (float);
 void Order_BlockTurnGun(float);

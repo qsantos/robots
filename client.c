@@ -43,18 +43,16 @@ ORDER(SetVelocity,  O_VELOCITY)
 ORDER(SetTurnSpeed, O_TURNSPEED)
 ORDER(SetGunSpeed,  O_GUNSPEED)
 
-/*
 #define ORDER_BLOCK(NAME, PARAM)    \
 void Order_Block##NAME(float param) \
 {                                   \
 	Order_##NAME(param);        \
-	while (robot.PARAM)         \
-		usleep();           \
+	while (robotOrder.PARAM)    \
+		usleep(100000);     \
 }
 ORDER_BLOCK(Advance, advance)
 ORDER_BLOCK(Turn,    turn)
-ORDER_BLOCK(TurnGu,  turnGun)
-*/
+ORDER_BLOCK(TurnGun, turnGun)
 
 void (*cb_Start   )(            ) = NULL;
 void (*cb_Tick    )(            ) = NULL;
