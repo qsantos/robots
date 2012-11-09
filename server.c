@@ -383,8 +383,8 @@ void Server_Loop(Server* s)
 		Robot nr =
 		{
 			curId++,
-			randf(116, s->game.width  - 58),
-			randf(116, s->game.height - 58),
+			randf(116, s->game.width  - 116),
+			randf(116, s->game.height - 116),
 			73,
 			116,
 			deg2rad(random() % 360),

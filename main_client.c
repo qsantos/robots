@@ -20,16 +20,21 @@
 
 #include "client.h"
 
+#define PI (3.14159265358979)
+static inline float max(float a, float b)
+{
+	return a > b ? a : b;
+}
+
+float margin;
 void* mainMove(void* param)
 {
 	(void) param;
 
+	margin = max(robot.width, robot.height);
 	Order_BlockTurn(-robot.angle);
-	while (1)
-	{
-		Order_BlockAdvance(100);
-		Order_BlockAdvance(-100);
-	}
+	Order_BlockAdvance(robot.y - margin);
+	Order_BlockTurn(PI/2);
 
 	return NULL;
 }
