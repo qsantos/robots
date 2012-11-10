@@ -25,13 +25,17 @@ static inline float max(float a, float b)
 {
 	return a > b ? a : b;
 }
+static inline float hypothenuse(float a, float b)
+{
+	return sqrt(a*a + b*b);
+}
 
 float margin;
 void* mainMove(void* param)
 {
 	(void) param;
 
-	margin = max(robot.width, robot.height);
+	margin = hypothenuse(robot.width, robot.height) / 2;
 	Order_BlockTurn(-robot.angle);
 	Order_BlockAdvance(robot.y - margin);
 	Order_BlockTurn(PI/2);

@@ -378,13 +378,14 @@ void Server_Loop(Server* s)
 
 	srandom(time(NULL));
 	u32 curId = 0;
+	float margin = hypothenuse(73, 116) / 2;
 	for (u32 i = 0; i < s->game.n_clients; i++)
 	{
 		Robot nr =
 		{
 			curId++,
-			randf(116, s->game.width  - 116),
-			randf(116, s->game.height - 116),
+			randf(margin, s->game.width  - margin),
+			randf(margin, s->game.height - margin),
 			73,
 			116,
 			deg2rad(random() % 360),

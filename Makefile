@@ -1,7 +1,7 @@
 all: client server display
 
 client: socket.o main_client.o client.o
-	gcc -lpthread $^ -o $@
+	gcc -lm -lpthread $^ -o $@
 
 server: socket.o main_server.o server.o math.o
 	gcc -lm $^ -o $@

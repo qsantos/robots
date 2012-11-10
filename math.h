@@ -20,6 +20,7 @@
 #define MATH_H
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "game.h"
 
@@ -34,6 +35,11 @@ inline float randf(float a, float b)
 /* TRIGONOMETRY */
 
 #define PI (3.14159265358979323846)
+
+inline float hypothenuse(float a, float b)
+{
+	return sqrt(a*a + b*b);
+}
 
 // positive float mod
 inline float pfmod(float x, float m)
