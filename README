@@ -1,3 +1,16 @@
+=== COMPILE ===
+
+You'll need the following packages:
+
+opengl1-mesa-dev openglu1-mesa-dev freeglut3-dev libsoil-dev libalut-dev libvorbis-dev
+
+Then, go into the 'src/' directory and type:
+
+$ make
+
+You're done !
+
+
 === EXECUTE ===
 
 Binaries should be put in the 'bin/' directory. First launch the server by typing:
