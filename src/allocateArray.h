@@ -23,10 +23,16 @@
 // dynamic bitfield-driven (allowing to release and reuse cells) arrays
 
 // In general:
-//   * P    is a prefix which says where data is found (e.g. P robots means P=P )
+//   * P    is a prefix which says where data is found
 //   * TYPE is the type of the stored values
 //   * NAME is the name of the variable or the parameter to be used
 //   * I    is the variable name to use when iterating or finding a position
+
+// for memory allocation
+#include <stdlib.h>
+
+// type of length 32 bits
+#define u32 unsigned long
 
 // give the definition headers of the necessary variables (or parameters)
 #define DEF(TYPE, NAME)      \
@@ -108,5 +114,7 @@
 	P active_##NAME[I/32] ^= (1 << (I%32)); \
 	P n_##NAME--;                           \
 }
+
+#undef u32
 
 #endif

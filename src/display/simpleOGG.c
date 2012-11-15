@@ -50,7 +50,7 @@ void LoadOGG(const char* filename, ALuint bufferID)
 		assert(bytes >= 0);
 		if (!bytes)
 			break;
-		
+
 		size += bytes;
 	}
 

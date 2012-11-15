@@ -293,7 +293,7 @@ void cb_displayFunc()
 
 	for (u32 i = 0; i < n_bullets; i++)
 		drawBullet(&bullets[i]);
-	
+
 	glPopMatrix();
 	glutSwapBuffers();
 	glutPostRedisplay();
