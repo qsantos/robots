@@ -295,6 +295,30 @@ void cb_displayFunc()
 		drawBullet(&bullets[i]);
 
 	glPopMatrix();
+
+	glPushMatrix();
+		glTranslatef(5, 5, 0);
+		glColor4ub(127, 200, 200, 127);
+		glBegin(GL_QUADS);
+			glVertex2f(0,   0);
+			glVertex2f(100, 0);
+			glVertex2f(100, 100);
+			glVertex2f(0,   100);
+		glEnd();
+
+		glTranslatef(10, 24, 0);
+		glColor4f(1, 1, 1, 1);
+		static const float scale = 0.1;
+		glScalef(scale, -scale, scale);
+		glRasterPos2i(0, 0);
+		for (u32 i = 0; i < n_robots; i++)
+		{
+			unsigned char glText[TEXT_BUFFER]; // TODO : check the macro
+			snprintf((char*)glText, TEXT_BUFFER, "#%lu: %.2f\n", robots[i].id, robots[i].energy);
+			glutStrokeString(TEXT_FONT, glText);
+		}
+	glPopMatrix();
+
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
