@@ -1,5 +1,5 @@
 #!/bin/sh
-for i in $(ls *.h *.c)
+for i in $(find -name \*.[hc])
 do
 	line=$(grep -Enm1 '^\\\*/' $i | awk -F: '{print $1;}') # length of the previous header
 	grep -E "^.\*" header > tmp # new header for the file (extracted from this script)
