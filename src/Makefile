@@ -1,6 +1,6 @@
 CFLAGS = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500
-BINDIR = bin
-OBJDIR = obj
+BINDIR = ../bin
+OBJDIR = ../obj
 
 SRC_SER = $(wildcard *.c server/*.c)
 SRC_DIS = $(wildcard *.c display/*.c)
@@ -13,19 +13,22 @@ OBJ_CLI = $(addprefix $(OBJDIR)/, $(SRC_CLI:.c=.o))
 all: $(BINDIR)/client $(BINDIR)/server $(BINDIR)/display
 
 $(BINDIR)/server: $(OBJ_SER)
-	@echo $@
+	@echo "Linking server..."
 	@mkdir -p $(@D)
 	@gcc -lm $^ -o $@
+	@echo ""
 
 $(BINDIR)/display: $(OBJ_DIS)
-	@echo $@
+	@echo "Linking display..."
 	@mkdir -p $(@D)
 	@gcc -lGL -lglut -lSOIL -lalut -lvorbisfile $^ -o $@
+	@echo ""
 
 $(BINDIR)/client: $(OBJ_CLI)
-	@echo $@
+	@echo "Linking client..."
 	@mkdir -p $(@D)
 	@gcc -lm -lpthread $^ -o $@
+	@echo ""
 
 $(OBJDIR)/%.o: %.c
 	@echo $<
