@@ -19,8 +19,8 @@
 #ifndef SERVER_H
 #define SERVER_C
 
-#include "game.h"
-#include "allocateArray.h"
+#include "../game.h"
+#include "../allocateArray.h"
 
 typedef struct
 {

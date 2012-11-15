@@ -19,7 +19,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "game.h"
+#include "../game.h"
 
 // This file intends to provide an obvious interface for the robot communication
 // You may create a very simple robot by just calling 'autoClient' in your 'main'

@@ -24,10 +24,10 @@
 #include <pthread.h>
 #include <assert.h>
 
-#include "socket.h"
-#include "game.h"
-#include "math.h"
-#include "allocateArray.h"
+#include "../socket.h"
+#include "../game.h"
+#include "../math.h"
+#include "../allocateArray.h"
 #include "simpleOGG.h"
 
 #define GLUT_KEY_ESC    (27)

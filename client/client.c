@@ -20,7 +20,7 @@
 
 #include <unistd.h>
 
-#include "socket.h"
+#include "../socket.h"
 
 Game       game;
 Robot      robot;

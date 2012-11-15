@@ -22,7 +22,7 @@
 #include <AL/alut.h>
 #include <vorbis/vorbisfile.h>
 
-#include "common.h"
+#include "../common.h"
 
 void LoadOGG(const char* filename, ALuint bufferID)
 {

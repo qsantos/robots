@@ -19,7 +19,7 @@
 #include <pthread.h>
 
 #include "client.h"
-#include "math.h"
+#include "../math.h"
 
 static inline float min(float a, float b)
 {

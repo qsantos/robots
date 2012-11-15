@@ -27,8 +27,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "socket.h"
-#include "math.h"
+#include "../socket.h"
+#include "../math.h"
 
 #define RADAR_SIGHT 1000
 

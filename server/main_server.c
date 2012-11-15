@@ -18,7 +18,7 @@
 
 #include <assert.h>
 
-#include "socket.h"
+#include "../socket.h"
 #include "server.h"
 
 void usage(int argc, char** argv)
