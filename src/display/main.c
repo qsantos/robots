@@ -34,11 +34,6 @@
 #define GLUT_WHEEL_UP   (3)
 #define GLUT_WHEEL_DOWN (4)
 
-static inline float max(float a, float b)
-{
-	return a > b ? a : b;
-}
-
 // texture information
 typedef enum
 {

@@ -24,6 +24,18 @@
 
 #include "game.h"
 
+/* BASICS */
+
+static inline float min(float a, float b)
+{
+	return a < b ? a : b;
+}
+static inline float max(float a, float b)
+{
+	return a > b ? a : b;
+}
+
+
 /* RANDOM */
 
 // return a float between a and b
@@ -31,6 +43,7 @@ inline float randf(float a, float b)
 {
 	return a + ((float) random()) * (b-a) / RAND_MAX;
 }
+
 
 /* TRIGONOMETRY */
 
@@ -72,6 +85,7 @@ inline float rad2deg(float a)
 {
 	return normDeg(a * 180.0 / PI);
 }
+
 
 /* PHYSICS */
 

@@ -21,14 +21,6 @@
 #include "client.h"
 #include "../math.h"
 
-static inline float min(float a, float b)
-{
-	return a < b ? a : b;
-}
-static inline float max(float a, float b)
-{
-	return a > b ? a : b;
-}
 
 void* mainMove(void* param)
 {
