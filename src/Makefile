@@ -10,7 +10,7 @@ OBJ_SER = $(addprefix $(OBJDIR)/, $(SRC_SER:.c=.o))
 OBJ_DIS = $(addprefix $(OBJDIR)/, $(SRC_DIS:.c=.o))
 OBJ_CLI = $(addprefix $(OBJDIR)/, $(SRC_CLI:.c=.o))
 
-all: $(BINDIR)/client $(BINDIR)/server $(BINDIR)/display
+all: $(addprefix $(BINDIR)/, client server display)
 
 $(BINDIR)/server: $(OBJ_SER)
 	@echo "Linking server..."

@@ -63,7 +63,10 @@ static int   winWidth  = 1024;
 static int   winHeight = 768;
 static int   mouseX    = 0;
 static int   mouseY    = 0;
-static float zoom      = 1;
+
+static float viewX = 0;
+static float viewY = 0;
+static float viewZoom  = 1;
 
 static struct timeb lastDraw;
 static int          server;
@@ -172,6 +175,7 @@ void handleEvent()
 void* listener(void* params)
 {
 	(void) params;
+
 	while (true)
 		handleEvent();
 	return NULL;
@@ -268,8 +272,9 @@ void cb_displayFunc()
 	glPushMatrix();
 	glTranslatef(0.375, 0.375, 0); // hack against pixel centered coordinates
 
-	glTranslatef(winWidth / 2 - mouseX, winHeight / 2 - mouseY, 0);
-	glScalef(zoom, zoom, zoom);
+	glTranslatef(winWidth / 2, winHeight / 2, 0);
+	glScalef(viewZoom, viewZoom, viewZoom);
+	glTranslatef(-viewX, -viewY, 0);
 
 	glPushMatrix();
 		glTranslatef(game.width / 2, game.height / 2, 0);
@@ -301,21 +306,26 @@ void cb_mouseFunc(int button, int state, int x, int y)
 	(void) y;
 
 	if (button == GLUT_WHEEL_UP)
-		zoom *= 1.1;
+		viewZoom *= 1.1;
 	else if (button == GLUT_WHEEL_DOWN)
-		zoom /= 1.1;
+		viewZoom /= 1.1;
 }
 
 void cb_motionFunc(int x, int y)
 {
-	mouseX = x;
-	mouseY = y;
+	if (mouseX == x && mouseY == y)
+		return;
+
+	viewX += (x - mouseX) / viewZoom;
+	viewY += (y - mouseY) / viewZoom;
+	mouseX = winWidth / 2;
+	mouseY = winHeight / 2;
+	glutWarpPointer(mouseX, mouseY);
 }
 
 void cb_passiveMotionFunc(int x, int y)
 {
-	mouseX = x;
-	mouseY = y;
+	cb_motionFunc(x, y);
 }
 
 void glInit()
@@ -403,6 +413,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitWindowSize(winWidth, winHeight);
 	winId = glutCreateWindow("Robot battle");
+	glutSetCursor(GLUT_CURSOR_NONE);
 
 	glutDisplayFunc      (&cb_displayFunc);
 	glutMouseFunc        (&cb_mouseFunc);
