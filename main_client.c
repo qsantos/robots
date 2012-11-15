@@ -19,26 +19,47 @@
 #include <pthread.h>
 
 #include "client.h"
+#include "math.h"
 
-#define PI (3.14159265358979)
+static inline float min(float a, float b)
+{
+	return a < b ? a : b;
+}
 static inline float max(float a, float b)
 {
 	return a > b ? a : b;
 }
-static inline float hypothenuse(float a, float b)
-{
-	return sqrt(a*a + b*b);
-}
 
-float margin;
 void* mainMove(void* param)
 {
 	(void) param;
 
-	margin = hypothenuse(robot.width, robot.height) / 2;
-	Order_BlockTurn(-robot.angle);
-	Order_BlockAdvance(robot.y - margin);
-	Order_BlockTurn(PI/2);
+	float margin = hypothenuse(robot.width, robot.height) / 2 + 1;
+
+	// compute the distance to the closest wall and fetch its direction
+	float north = robot.y;
+	float south = game.height - robot.y;
+	float west  = robot.x;
+	float east  = game.width - robot.x;
+	float closest = min( min(north, south) , min(west, east) );
+	int step = closest == north ? 0 :
+	           closest == east  ? 1 :
+	           closest == south ? 2 :
+                                      3;
+	// head toward this wall
+	Order_TurnGun(PI/2);
+	Order_BlockTurn(cfmod(step*PI/2-robot.angle, 2*PI));
+	while (1)
+	{
+		// circle around the map
+		float d = step == 0 ? robot.y :
+		          step == 1 ? game.width  - robot.x :
+		          step == 2 ? game.height - robot.y :
+		                      robot.x;
+		Order_BlockAdvance(d - margin);
+		Order_BlockTurn(PI/2);
+		step = (step+1)%4;
+	}
 
 	return NULL;
 }
@@ -53,7 +74,7 @@ void cbStart()
 void cbRobot(Robot* r)
 {
 	(void) r;
-//	Order_Fire(1);
+	Order_Fire(1);
 }
 
 int main(int argc, char** argv)
