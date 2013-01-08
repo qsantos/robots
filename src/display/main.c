@@ -90,7 +90,7 @@ typedef struct
 DEF(Explosion, explosions)
 
 // TODO: read all robots, orderRobots or bullets in one time
-void handleEvent()
+static void handleEvent()
 {
 	EventCode eventCode;
 	read(server, &eventCode, sizeof(EventCode));
@@ -198,7 +198,7 @@ static inline void drawTexture(Texture tex, float width, float height)
 }
 #define TEXT_BUFFER (1024)
 #define TEXT_FONT   GLUT_STROKE_ROMAN
-void drawRobot(Robot* r)
+static void drawRobot(Robot* r)
 {
 	assert(r);
 
@@ -231,7 +231,7 @@ void drawRobot(Robot* r)
 
 }
 
-void drawExplosion(u32 i)
+static void drawExplosion(u32 i)
 {
 	Explosion* e = &explosions[i];
 	u32 step = (u32)(16 * e->curTime / EXPLOSION_DURATION);
@@ -251,7 +251,7 @@ void drawExplosion(u32 i)
 	glPopMatrix();
 }
 
-void drawBullet(Bullet* b)
+static void drawBullet(Bullet* b)
 {
 	assert(b);
 
@@ -261,7 +261,7 @@ void drawBullet(Bullet* b)
 	glEnd();
 }
 
-void cb_displayFunc()
+static void cb_displayFunc()
 {
 	struct timeb cur;
 	ftime(&cur);
@@ -323,7 +323,7 @@ void cb_displayFunc()
 	glutPostRedisplay();
 }
 
-void cb_mouseFunc(int button, int state, int x, int y)
+static void cb_mouseFunc(int button, int state, int x, int y)
 {
 	(void) state;
 	(void) x;
@@ -335,7 +335,7 @@ void cb_mouseFunc(int button, int state, int x, int y)
 		viewZoom /= 1.1;
 }
 
-void cb_motionFunc(int x, int y)
+static void cb_motionFunc(int x, int y)
 {
 	if (mouseX == x && mouseY == y)
 		return;
@@ -347,12 +347,12 @@ void cb_motionFunc(int x, int y)
 	glutWarpPointer(mouseX, mouseY);
 }
 
-void cb_passiveMotionFunc(int x, int y)
+static void cb_passiveMotionFunc(int x, int y)
 {
 	cb_motionFunc(x, y);
 }
 
-void glInit()
+static void glInit()
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glPointSize(3);
@@ -392,7 +392,7 @@ void glInit()
 // threaded sound start
 int*   g_argc;
 char** g_argv;
-void* soundStart(void* param)
+static void* soundStart(void* param)
 {
 	(void) param;
 
@@ -402,7 +402,7 @@ void* soundStart(void* param)
 	return NULL;
 }
 
-void usage(int argc, char** argv)
+static void usage(int argc, char** argv)
 {
 	(void) argc;
 	printf
