@@ -24,8 +24,8 @@
 static void usage(int argc, char** argv)
 {
 	(void) argc;
-	printf
-	(
+
+	fprintf(stderr,
 		"Usage: %s [ADDRESS [PORT [N_CLIENTS]]]\n"
 		"\n"
 		"  INTERFACE  the interface to listen to\n"

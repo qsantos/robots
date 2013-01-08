@@ -117,8 +117,8 @@ void handleEvents()
 static void usage(int argc, char** argv)
 {
 	(void) argc;
-	printf
-	(
+
+	fprintf(stderr,
 		"Usage: %s [ADDRESS [PORT]]\n"
 		"\n"
 		"  ADDRESS  the node of the game server\n"

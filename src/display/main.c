@@ -405,8 +405,8 @@ static void* soundStart(void* param)
 static void usage(int argc, char** argv)
 {
 	(void) argc;
-	printf
-	(
+
+	fprintf(stderr,
 		"Usage: %s [ADDRESS [PORT]]\n"
 		"\n"
 		"  ADDRESS  the address of the game server\n"
