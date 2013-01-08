@@ -21,7 +21,7 @@
 #include "../socket.h"
 #include "server.h"
 
-void usage(int argc, char** argv)
+static void usage(int argc, char** argv)
 {
 	(void) argc;
 	printf
