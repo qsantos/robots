@@ -21,7 +21,7 @@ $(BINDIR)/server: $(OBJ_SER)
 $(BINDIR)/display: $(OBJ_DIS)
 	@echo "Linking display..."
 	@mkdir -p $(@D)
-	@gcc -lGL -lglut -lSOIL -lalut -lvorbisfile $^ -o $@
+	@gcc -lm -lpthread -lGL -lglut -lSOIL -lopenal -lalut -lvorbisfile $^ -o $@
 	@echo ""
 
 $(BINDIR)/client: $(OBJ_CLI)
