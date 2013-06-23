@@ -1,20 +1,28 @@
-#!/bin/sh
-for i in $(find -name \*.[hc])
+#!/bin/bash
+#for i in $(find -name "*.[hc]")
+for i in $(ls math.c)
 do
-	line=$(grep -Enm1 '^\\\*/' $i | awk -F: '{print $1;}') # length of the previous header
-	grep -E "^.\*" header > tmp # new header for the file (extracted from this script)
-	if [ -z $line ]
-	then
-		cat $i >> tmp
-	else
-		tail $i -n+$(($line + 1)) >> tmp
-	fi
+	exec > tmp
+
+	# new header (end of this script)
+	tail -n17 $0
+	echo ""
+
+	# length of the old header
+	line=`grep -Enm1 '^\\\\\*/$' $i`
+	line=${line%%:\\*/}
+	line=${line:--1}
+	line=$(($line+1))
+
+	# skip the old header
+	tail $i -n+$line
+
 	mv tmp $i
 done
 exit 0
 /*\
  *  This is an awesome programm simulating awesome battles of awesome robot tanks
- *  Copyright (C) 2012  Quentin SANTOS
+ *  Copyright (C) 2012-2013 Quentin SANTOS
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

@@ -412,11 +412,12 @@ void Server_Loop(Server* s)
 
 
 	int epollfd = epoll_create(s->game.n_clients);
-	struct epoll_event  ev;
 	for (u32 i = 0; i < s->game.n_clients; i++)
 	{
 		int flags = fcntl(s->clients[i], F_GETFL, 0);
 		fcntl(s->clients[i], F_SETFL, flags | O_NONBLOCK);
+
+		struct epoll_event ev;
 		ev.events   = EPOLLIN;
 		ev.data.u32 = i;
 		epoll_ctl(epollfd, EPOLL_CTL_ADD, s->clients[i], &ev);
@@ -425,9 +426,9 @@ void Server_Loop(Server* s)
 	struct timeb last;
 	struct timeb cur;
 	ftime(&cur);
-	struct epoll_event events[10];
 	while (42)
 	{
+		struct epoll_event events[10];
 		u32 n_events = epoll_wait(epollfd, events, 10, 1000 / FRAMERATE);
 		for (u32 i = 0; i < n_events; i++)
 		{

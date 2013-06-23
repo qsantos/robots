@@ -22,6 +22,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+inline void licence()
+{
+	printf(
+		"robots Copyright (C) 2012-2013 Quentin Santos\n"
+		"This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.\n"
+		"This is free software, and you are welcome to redistribute it\n"
+		"under certain conditions; type `show c' for details.\n"
+	);
+}
+
 /* TYPES */
 
 typedef unsigned char  u8;

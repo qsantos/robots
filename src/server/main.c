@@ -1,6 +1,6 @@
 /*\
  *  This is an awesome programm simulating awesome battles of awesome robot tanks
- *  Copyright (C) 2012  Quentin SANTOS
+ *  Copyright (C) 2012-2013 Quentin SANTOS
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@ static void usage(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+	licence();
+
 	const char* node      = argc > 1 ? argv[1]       : "::1";
 	const char* service   = argc > 2 ? argv[2]       : "4242";
 	u32         n_clients = argc > 3 ? atoi(argv[3]) : 2;
