@@ -38,8 +38,6 @@ static void usage(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	licence();
-
 	const char* node      = argc > 1 ? argv[1]       : "::1";
 	const char* service   = argc > 2 ? argv[2]       : "4242";
 	u32         n_clients = argc > 3 ? atoi(argv[3]) : 2;

@@ -130,8 +130,6 @@ static void usage(int argc, char** argv)
 
 int autoClient(int argc, char** argv)
 {
-	licence();
-
 	const char* node    = argc > 1 ? argv[1] : "::1";
 	const char* service = argc > 2 ? argv[2] : "4242";
 

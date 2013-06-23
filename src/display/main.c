@@ -418,8 +418,6 @@ static void usage(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-	licence();
-
 	g_argc = &argc;
 	g_argv = argv;
 
