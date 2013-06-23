@@ -1,6 +1,5 @@
 #!/bin/bash
-#for i in $(find -name "*.[hc]")
-for i in $(ls math.c)
+for i in $(find -name "*.[hc]")
 do
 	exec > tmp
 
