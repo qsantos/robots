@@ -54,9 +54,6 @@ int main(int argc, char** argv)
 	Server* server = Server_New(listener, n_clients);
 	assert(server);
 
-	Server_AcceptDisplay(server);
-	Server_AcceptClients(server);
-
 	printf("Starting game\n");
 	Server_Loop(server);
 

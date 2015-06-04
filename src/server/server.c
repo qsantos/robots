@@ -108,37 +108,6 @@ void Server_Debug(Server* s)
 	printf("\n");
 }
 
-void Server_AcceptDisplay(Server* s)
-{
-	assert(s);
-	s->display = TCP_Accept(s->listener);
-	printf("Display accepted\n");
-	int flags = fcntl(s->display, F_GETFL, 0);
-	fcntl(s->display, F_SETFL, flags | O_NONBLOCK);
-}
-
-void Server_AcceptClients(Server* s)
-{
-	assert(s);
-
-	printf("Waiting for %lu clients\n", s->game.n_slots);
-	for (u32 i = 0; i < s->game.n_slots; i++)
-	{
-		s->clients[i] = TCP_Accept(s->listener);
-		printf("One client accepted\n");
-		s->game.n_clients++;
-
-		u8 hello[2];
-		read(s->clients[i], hello, sizeof(u8) * 2);
-
-		write(s->clients[i], &MAGIC_WORD,     sizeof(u8));
-		write(s->clients[i], &VERSION_NUMBER, sizeof(u8));
-		write(s->clients[i], &s->game,        sizeof(Game));
-		for (u32 j = 0; j < i; j++)
-			write(s->clients[j], &s->game.n_clients, sizeof(u32));
-	}
-}
-
 // TODO: id is not cell num
 bool Server_HandleOrder(Server* s, u32 id)
 {
@@ -370,11 +339,27 @@ void Server_Loop(Server* s)
 {
 	assert(s);
 
-	int fd_max = 0;
-	for (u32 i = 0; i < s->game.n_clients; i++)
-		if (s->clients[i] > fd_max)
-		fd_max = s->clients[i];
-	fd_max++;
+	s->display = TCP_Accept(s->listener);
+	printf("Display accepted\n");
+	int flags = fcntl(s->display, F_GETFL, 0);
+	fcntl(s->display, F_SETFL, flags | O_NONBLOCK);
+
+	printf("Waiting for %lu clients\n", s->game.n_slots);
+	for (u32 i = 0; i < s->game.n_slots; i++)
+	{
+		s->clients[i] = TCP_Accept(s->listener);
+		printf("One client accepted\n");
+		s->game.n_clients++;
+
+		u8 hello[2];
+		read(s->clients[i], hello, sizeof(u8) * 2);
+
+		write(s->clients[i], &MAGIC_WORD,     sizeof(u8));
+		write(s->clients[i], &VERSION_NUMBER, sizeof(u8));
+		write(s->clients[i], &s->game,        sizeof(Game));
+		for (u32 j = 0; j < i; j++)
+			write(s->clients[j], &s->game.n_clients, sizeof(u32));
+	}
 
 	srandom(time(NULL));
 	u32 curId = 0;
