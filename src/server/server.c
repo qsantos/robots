@@ -19,7 +19,7 @@
 #include "server.h"
 
 #include <time.h>
-#include <sys/epoll.h>
+#include <poll.h>
 #include <sys/timeb.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -410,17 +410,18 @@ void Server_Loop(Server* s)
 	for (u32 i = 0; i < s->game.n_clients; i++)
 		write(s->clients[i], &START_MESSAGE, sizeof(u8));
 
+	size_t max_fds = s->game.n_clients;
+	struct pollfd fds[max_fds];
+	size_t n_fds = 0;
 
-	int epollfd = epoll_create(s->game.n_clients);
 	for (u32 i = 0; i < s->game.n_clients; i++)
 	{
 		int flags = fcntl(s->clients[i], F_GETFL, 0);
 		fcntl(s->clients[i], F_SETFL, flags | O_NONBLOCK);
 
-		struct epoll_event ev;
-		ev.events   = EPOLLIN;
-		ev.data.u32 = i;
-		epoll_ctl(epollfd, EPOLL_CTL_ADD, s->clients[i], &ev);
+		fds[n_fds].fd = s->clients[i];
+		fds[n_fds].events = POLLIN;
+		n_fds++;
 	}
 
 	struct timeb last;
@@ -428,11 +429,17 @@ void Server_Loop(Server* s)
 	ftime(&cur);
 	while (42)
 	{
-		struct epoll_event events[10];
-		u32 n_events = epoll_wait(epollfd, events, 10, 1000 / FRAMERATE);
-		for (u32 i = 0; i < n_events; i++)
+		int ret = poll(fds, n_fds, 1000 / FRAMERATE);
+		if (ret < 0)
+			break;
+
+		for (size_t i = 0; i < n_fds; i++)
 		{
-			u32 client = events[i].data.u32;
+			if (!fds[i].revents & POLLIN)
+				continue;
+			fds[i].revents = 0;
+
+			u32 client = i;
 			while (Server_HandleOrder(s, client));
 		}
 
