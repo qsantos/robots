@@ -1,4 +1,4 @@
-CFLAGS = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500
+CFLAGS = -Wall -Wextra -Werror -pedantic -ansi -std=c99 -O3 -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L
 BINDIR = ../bin
 OBJDIR = ../obj
 
