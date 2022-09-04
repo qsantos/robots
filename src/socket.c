@@ -22,7 +22,6 @@
 #include <unistd.h>
 #include <netdb.h>
 
-#include <stdio.h> // TODO
 int TCP_Connect(const char* node, const char* service)
 {
 // see getaddrinfo(2)
