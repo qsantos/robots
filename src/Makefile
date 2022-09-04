@@ -15,19 +15,19 @@ all: $(addprefix $(BINDIR)/, client server display)
 $(BINDIR)/server: $(OBJ_SER)
 	@echo "Linking server..."
 	@mkdir -p $(@D)
-	@gcc -lm $^ -o $@
+	@gcc $^ -lm -o $@
 	@echo ""
 
 $(BINDIR)/display: $(OBJ_DIS)
 	@echo "Linking display..."
 	@mkdir -p $(@D)
-	@gcc -lm -lpthread -lGL -lglut -lSOIL -lopenal -lalut -lvorbisfile $^ -o $@
+	@gcc $^ -lm -lpthread -lGL -lglut -lSOIL -lopenal -lalut -lvorbisfile -o $@
 	@echo ""
 
 $(BINDIR)/client: $(OBJ_CLI)
 	@echo "Linking client..."
 	@mkdir -p $(@D)
-	@gcc -lm -lpthread $^ -o $@
+	@gcc $^ -lm -lpthread -o $@
 	@echo ""
 
 $(OBJDIR)/%.o: %.c
