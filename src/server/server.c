@@ -20,7 +20,6 @@
 
 #include <time.h>
 #include <poll.h>
-#include <sys/timeb.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -409,9 +408,9 @@ void Server_Loop(Server* s)
 		n_fds++;
 	}
 
-	struct timeb last;
-	struct timeb cur;
-	ftime(&cur);
+	struct timespec last;
+	struct timespec cur;
+	clock_gettime(CLOCK_REALTIME, &cur);
 	while (42)
 	{
 		int ret = poll(fds, n_fds, 1000 / FRAMERATE);
@@ -429,8 +428,8 @@ void Server_Loop(Server* s)
 		}
 
 		last = cur;
-		ftime(&cur);
-		Server_Tick(s, (cur.time-last.time)+((float)(cur.millitm-last.millitm) / 1000));
+		clock_gettime(CLOCK_REALTIME, &cur);
+		Server_Tick(s, (cur.tv_sec-last.tv_sec)+((float)(cur.tv_nsec-last.tv_nsec) / 1e9f));
 //		Server_Debug(s);
 		Server_Dump(s);
 	}

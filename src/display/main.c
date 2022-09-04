@@ -19,10 +19,10 @@
 #include <GL/freeglut.h>
 #include <SOIL/SOIL.h>
 #include <unistd.h>
-#include <sys/timeb.h>
 #include <string.h>
 #include <pthread.h>
 #include <assert.h>
+#include <time.h>
 
 #include "../socket.h"
 #include "../game.h"
@@ -68,7 +68,7 @@ static float viewX = 0;
 static float viewY = 0;
 static float viewZoom  = 1;
 
-static struct timeb lastDraw;
+static struct timespec lastDraw;
 static int          server;
 static Game         game;
 static u32          n_robots    = 0;
@@ -263,9 +263,9 @@ static void drawBullet(Bullet* b)
 
 static void cb_displayFunc()
 {
-	struct timeb cur;
-	ftime(&cur);
-	float elapsed = (cur.time-lastDraw.time) + ((float)(cur.millitm-lastDraw.millitm)/1000);
+	struct timespec cur;
+	clock_gettime(CLOCK_REALTIME, &cur);
+	float elapsed = (cur.tv_sec-lastDraw.tv_sec) + ((float)(cur.tv_nsec-lastDraw.tv_nsec)/1e9f);
 	lastDraw = cur;
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -445,7 +445,7 @@ int main(int argc, char** argv)
 	glutPassiveMotionFunc(&cb_passiveMotionFunc);
 
 	INIT(, explosions);
-	ftime(&lastDraw);
+	clock_gettime(CLOCK_REALTIME, &lastDraw);
 
 	// server socket listening
 	pthread_t listenerThread;
